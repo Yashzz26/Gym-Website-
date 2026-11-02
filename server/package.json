@@ -1,0 +1,22 @@
+{
+  "name": "gym-management-server",
+  "version": "0.1.0",
+  "description": "Express REST API backend for the Gym Management System",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "echo \"No tests yet — added on Day 3\" && exit 0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {}
+}
