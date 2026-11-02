@@ -1,0 +1,38 @@
+/* ============================================================
+   App.css — root component styles
+   Design tokens (CSS variables) will be added on Day 2, Task 3.
+   ============================================================ */
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  background: #0a0e1a;
+  color: #f0f4f8;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.app-root h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #c6f135;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.note {
+  font-size: 0.9rem;
+  color: #64748b;
+  max-width: 480px;
+  margin: 0;
+}
