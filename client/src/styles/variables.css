@@ -1,0 +1,148 @@
+/**
+ * variables.css — Design Tokens for Gym Management System
+ * Visual Direction: Dark Navy/Black surfaces with Neon Lime accents
+ * Referenced from Gym_App_Blueprint_PWS_Coding.pdf & TASK1_ARCHITECTURE.md
+ */
+
+:root {
+  /* ============================================================
+     1. COLOR PALETTE
+     ============================================================ */
+
+  /* Surface / Background Colors (Dark Navy & Black) */
+  --color-bg-primary: #0a0e1a;        /* Deep canvas navy/black background */
+  --color-bg-secondary: #0f172a;      /* Cards, panels, sidebar background */
+  --color-bg-tertiary: #1e293b;       /* Inputs, elevated containers, hover state */
+  --color-bg-elevated: #243247;       /* Modals, popovers, dropdown menus */
+  --color-bg-overlay: rgba(10, 14, 26, 0.8); /* Modal / drawer backdrop */
+
+  /* Brand / Accent Colors (Neon Lime) */
+  --color-accent: #c6f135;            /* Electric neon lime primary accent */
+  --color-accent-hover: #b5e028;      /* Hover state for buttons/links */
+  --color-accent-active: #9ec81e;     /* Pressed / active accent state */
+  --color-accent-subtle: rgba(198, 241, 53, 0.12); /* Subtle badge / highlight fill */
+  --color-accent-border: rgba(198, 241, 53, 0.35); /* Subtle accent border */
+  --color-accent-glow: rgba(198, 241, 53, 0.25);   /* Neon glow shadow */
+  --color-accent-contrast: #0a0e1a;   /* High-contrast dark text on lime fill */
+
+  /* Typography / Content Colors */
+  --color-text-primary: #f8fafc;      /* Primary high-contrast text */
+  --color-text-secondary: #94a3b8;    /* Secondary / muted descriptive text */
+  --color-text-muted: #64748b;        /* Captions, subtle hints, placeholders */
+  --color-text-disabled: #475569;     /* Disabled element text */
+  --color-text-inverse: #0a0e1a;      /* Inverted text on bright backgrounds */
+
+  /* Border / Divider Colors */
+  --color-border-subtle: #1e293b;     /* Delicate separators, card borders */
+  --color-border-default: #334155;    /* Default input & container borders */
+  --color-border-strong: #475569;     /* Active borders, high-contrast dividers */
+  --color-border-focus: #c6f135;      /* Focus ring color */
+
+  /* Feedback / Semantic Colors */
+  --color-success: #10b981;           /* Success / Verified emerald */
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-warning: #f59e0b;           /* Warning / Pending amber */
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-danger: #ef4444;            /* Danger / Overdue / Error red */
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-info: #3b82f6;              /* Information / Active blue */
+  --color-info-bg: rgba(59, 130, 246, 0.15);
+
+  /* ============================================================
+     2. TYPOGRAPHY
+     ============================================================ */
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+  /* ============================================================
+     3. SPACING SYSTEM (4px base grid)
+     ============================================================ */
+
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;   /* 4px */
+  --spacing-2: 0.5rem;    /* 8px */
+  --spacing-3: 0.75rem;   /* 12px */
+  --spacing-4: 1rem;      /* 16px */
+  --spacing-5: 1.25rem;   /* 20px */
+  --spacing-6: 1.5rem;    /* 24px */
+  --spacing-8: 2rem;      /* 32px */
+  --spacing-10: 2.5rem;   /* 40px */
+  --spacing-12: 3rem;     /* 48px */
+  --spacing-16: 4rem;     /* 64px */
+
+  /* ============================================================
+     4. BORDER RADII
+     ============================================================ */
+
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ============================================================
+     5. SHADOWS & ELEVATION
+     ============================================================ */
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-accent-glow: 0 0 20px rgba(198, 241, 53, 0.35);
+
+  /* ============================================================
+     6. TRANSITIONS & TIMING
+     ============================================================ */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ============================================================
+     7. Z-INDEX LAYERS
+     ============================================================ */
+
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-drawer: 300;
+  --z-modal: 500;
+  --z-toast: 1000;
+
+  /* ============================================================
+     8. LAYOUT DIMENSIONS
+     ============================================================ */
+
+  --container-max-width: 1280px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
