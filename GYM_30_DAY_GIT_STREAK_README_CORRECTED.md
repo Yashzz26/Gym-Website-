@@ -170,7 +170,8 @@ counts contribution days, not the number of commits as separate squares.
         `git check-ignore -v .env server/serviceAccount.json client/dist`
         (use representative paths if files do not exist).
     -   Commit: `feat(client): add global styles and design tokens`
--   [ ] **Task 4: Add Express middleware foundation** \[M\]
+    -   Commit hash: `e624b9a`
+-   [x] **Task 4: Add Express middleware foundation** \[M\]
     -   Add structured error handling, request validation (Zod or Joi),
         structured request logging, CORS configured from environment
         variables, and basic rate limiting. Wire middleware in the
@@ -636,7 +637,7 @@ counts contribution days, not the number of commits as separate squares.
   -------- --------- ----------- ----------- ----------- --------- --------- -------
          1 02 Nov       \[x\]       \[x\]       \[x\]            2           930bdfd, a42185b
 
-         2 03 Nov       \[x\]       \[ \]       \[ \]            1           
+         2 03 Nov       \[x\]       \[x\]       \[x\]            2           e624b9a
 
          3 04 Nov       \[ \]       \[ \]       \[ \]            0           
 
