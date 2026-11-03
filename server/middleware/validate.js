@@ -38,3 +38,4 @@ export const validate = (schemas = {}) => {
 };
 
 export default validate;
+
