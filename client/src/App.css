@@ -1,6 +1,5 @@
 /* ============================================================
-   App.css — root component styles
-   Design tokens (CSS variables) will be added on Day 2, Task 3.
+   App.css — root component styles using design tokens
    ============================================================ */
 
 .app-root {
@@ -9,30 +8,45 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
+  gap: var(--spacing-4);
+  padding: var(--spacing-8);
   text-align: center;
-  background: #0a0e1a;
-  color: #f0f4f8;
-  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.app-card {
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-4);
 }
 
 .app-root h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #c6f135;
-  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-accent);
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
-  font-size: 1.1rem;
-  color: #94a3b8;
-  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
 }
 
 .note {
-  font-size: 0.9rem;
-  color: #64748b;
-  max-width: 480px;
-  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 440px;
+  line-height: var(--line-height-relaxed);
+}
+
+.token-preview {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+  flex-wrap: wrap;
+  justify-content: center;
 }
