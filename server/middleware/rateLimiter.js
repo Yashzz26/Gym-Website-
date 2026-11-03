@@ -36,3 +36,4 @@ export const configureRateLimiter = (options = {}) => {
 };
 
 export default configureRateLimiter;
+

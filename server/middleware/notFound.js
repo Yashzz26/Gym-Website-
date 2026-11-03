@@ -11,3 +11,4 @@ export const notFound = (req, _res, next) => {
 };
 
 export default notFound;
+
