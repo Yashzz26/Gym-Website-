@@ -1,78 +1,86 @@
 /**
  * server.js — Gym Management System Express entry point
  *
- * Day 1: Foundation only.
- * - Loads environment variables
- * - Mounts base middleware (CORS, JSON body parser)
- * - Mounts the /api/health route
- * - Starts the HTTP server
- *
- * Middleware (auth, validation, rate-limiting) and feature routers
- * are added in subsequent development days.
+ * Middleware Pipeline (wired in order):
+ * 1. Request logging & Request ID generation (requestLogger)
+ * 2. Cross-Origin Resource Sharing (configureCors)
+ * 3. Rate limiting (configureRateLimiter)
+ * 4. Body parsing (express.json, express.urlencoded)
+ * 5. Feature routes (/api/health, ...)
+ * 6. 404 Route-not-found handler (notFound)
+ * 7. Centralized structured error handler (errorHandler)
  */
 
 import 'dotenv/config';
 import express from 'express';
-import cors from 'cors';
+import url from 'node:url';
 
+// Middleware imports
+import { requestLogger } from './middleware/requestLogger.js';
+import { configureCors } from './middleware/cors.js';
+import { configureRateLimiter } from './middleware/rateLimiter.js';
+import { notFound } from './middleware/notFound.js';
+import { errorHandler } from './middleware/errorHandler.js';
+
+// Route imports
 import healthRouter from './routes/health.js';
 
 // ---------------------------------------------------------------------------
-// App setup
+// App Factory
 // ---------------------------------------------------------------------------
 
-const app = express();
+export const createApp = () => {
+  const app = express();
 
-// CORS — allow requests from the React dev server (or configured origin).
-// In production, set CORS_ORIGIN to the exact deployed frontend URL.
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
-app.use(
-  cors({
-    origin: corsOrigin,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  })
+  // 1. Structured request logging and Request ID tagging
+  app.use(requestLogger);
+
+  // 2. CORS configured from environment variables
+  app.use(configureCors());
+
+  // 3. Rate limiting (applies to all routes except excluded health checks)
+  app.use(configureRateLimiter());
+
+  // 4. Body parsers
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // 5. Routes
+  app.use('/api/health', healthRouter);
+
+  return app;
+};
+
+// ---------------------------------------------------------------------------
+// Default App Instance with Error Handlers
+// ---------------------------------------------------------------------------
+
+const app = createApp();
+
+// 6. Catch-all for undefined routes
+app.use(notFound);
+
+// 7. Centralized structured error handler
+app.use(errorHandler);
+
+// ---------------------------------------------------------------------------
+// Start server (only if executed directly, avoiding duplicate listeners in tests)
+// ---------------------------------------------------------------------------
+
+const isMainModule = Boolean(
+  process.argv[1] &&
+  (url.fileURLToPath(import.meta.url) === process.argv[1] ||
+   url.fileURLToPath(import.meta.url).replace(/\\/g, '/') === process.argv[1].replace(/\\/g, '/'))
 );
 
-// Parse JSON request bodies.
-app.use(express.json());
-
-// ---------------------------------------------------------------------------
-// Routes
-// ---------------------------------------------------------------------------
-
-app.use('/api/health', healthRouter);
-
-// 404 catch-all — must come after all route definitions.
-app.use((_req, res) => {
-  res.status(404).json({ status: 'error', message: 'Route not found.' });
-});
-
-// Global error handler — must have four parameters so Express recognises it.
-// eslint-disable-next-line no-unused-vars
-app.use((err, _req, res, _next) => {
-  const statusCode = err.statusCode || 500;
-  const message =
-    process.env.NODE_ENV === 'production' && statusCode === 500
-      ? 'An unexpected error occurred.'
-      : err.message || 'An unexpected error occurred.';
-
-  console.error('[ERROR]', err);
-  res.status(statusCode).json({ status: 'error', message });
-});
-
-// ---------------------------------------------------------------------------
-// Start server
-// ---------------------------------------------------------------------------
-
-const PORT = Number(process.env.PORT) || 5000;
-
-app.listen(PORT, () => {
-  console.log(
-    `[GymServer] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`
-  );
-  console.log(`[GymServer] Health check → http://localhost:${PORT}/api/health`);
-});
+if (isMainModule) {
+  const PORT = Number(process.env.PORT) || 5000;
+  app.listen(PORT, () => {
+    console.log(
+      `[GymServer] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`
+    );
+    console.log(`[GymServer] Health check → http://localhost:${PORT}/api/health`);
+  });
+}
 
 export default app;

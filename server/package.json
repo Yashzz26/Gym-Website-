@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "echo \"No tests yet — added on Day 3\" && exit 0"
+    "test": "node --test tests/middleware.test.js"
   },
   "engines": {
     "node": ">=22"
@@ -16,7 +16,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2"
-  },
-  "devDependencies": {}
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.2.1",
+    "zod": "^4.3.6"
+  }
 }
