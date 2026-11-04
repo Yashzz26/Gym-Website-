@@ -190,7 +190,8 @@ counts contribution days, not the number of commits as separate squares.
         only where screens are not implemented yet.
     -   Commit:
         `feat(client): configure routing and responsive application shell`
--   [ ] **Task 6: Add linting, formatting, tests and GitHub Actions CI**
+    -   Commit hash: `d3e374e`
+-   [x] **Task 6: Add linting, formatting, tests and GitHub Actions CI**
     \[M\]
     -   Configure ESLint and Prettier for client/server, `lint` scripts,
         Husky + lint-staged, Vitest + React Testing Library for the
@@ -201,7 +202,7 @@ counts contribution days, not the number of commits as separate squares.
         QR nonce policy, server-side activation, UTC timestamps, etc.)
         and append decisions as the project evolves.
     -   Commit: `chore(ci): add lint, format, tests and CI workflow`
--   [ ] Both planned commits pushed and visible on GitHub (Day 3).
+-   [x] Both planned commits pushed and visible on GitHub (Day 3).
 
 ### Day 4 --- Thursday, 05 November 2026 --- Firebase client setup
 
@@ -639,7 +640,7 @@ counts contribution days, not the number of commits as separate squares.
 
          2 03 Nov       \[x\]       \[x\]       \[x\]            2           e624b9a
 
-         3 04 Nov       \[x\]       \[ \]       \[ \]            1           
+         3 04 Nov       \[x\]       \[x\]       \[x\]            2           d3e374e
 
          4 05 Nov       \[ \]       \[ \]       \[ \]            0           
 
