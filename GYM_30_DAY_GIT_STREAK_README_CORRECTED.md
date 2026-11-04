@@ -178,11 +178,11 @@ counts contribution days, not the number of commits as separate squares.
         correct order and document configuration.
     -   Commit:
         `chore(server): add error, validation, logging, CORS and rate-limit middleware`
--   [ ] Both planned commits pushed and visible on GitHub (Day 2).
+-   [x] Both planned commits pushed and visible on GitHub (Day 2).
 
 ### Day 3 --- Wednesday, 04 November 2026 --- Routing, shared UI and CI foundation
 
--   [ ] **Task 5: Configure React Router and the shared application
+-   [x] **Task 5: Configure React Router and the shared application
     shell** \[M\]
     -   Create route groups for auth, member, reception, trainer and
         owner areas, a not-found page, and reusable responsive
@@ -639,7 +639,7 @@ counts contribution days, not the number of commits as separate squares.
 
          2 03 Nov       \[x\]       \[x\]       \[x\]            2           e624b9a
 
-         3 04 Nov       \[ \]       \[ \]       \[ \]            0           
+         3 04 Nov       \[x\]       \[ \]       \[ \]            1           
 
          4 05 Nov       \[ \]       \[ \]       \[ \]            0           
 
