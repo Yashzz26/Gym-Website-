@@ -16,6 +16,9 @@ Copy `.env.example` to `.env` and provide the Firebase web app configuration:
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Messaging sender ID |
 | `VITE_FIREBASE_APP_ID` | Web app ID |
 
+The Vite root is `client/`, so the local file must be created at
+`client/.env`. The actual `.env` file is ignored and must never be committed.
+
 These `VITE_` values are public Firebase web configuration and are safe to
 ship in the browser bundle. Firebase Admin credentials and other private
 integration secrets belong only in the server environment.
