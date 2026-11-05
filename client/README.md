@@ -20,6 +20,11 @@ These `VITE_` values are public Firebase web configuration and are safe to
 ship in the browser bundle. Firebase Admin credentials and other private
 integration secrets belong only in the server environment.
 
+The authentication screens use Firebase email/password methods. New accounts
+receive a verification email and are signed out until verification is
+complete; login rejects unverified accounts. Public registration creates a
+member identity only and does not accept a role from the browser.
+
 ## Commands
 
 ```bash

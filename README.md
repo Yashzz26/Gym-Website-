@@ -72,6 +72,12 @@ Member---and implements the 11 core screens described in the blueprint.
 All privileged operations must be authorized by the Express backend.
 Never trust a role supplied by the browser.
 
+The client requires email verification before completing login. Registration
+creates a member account without accepting a role from the browser, sends a
+Firebase verification email, and signs the user out until verification is
+complete. Staff approval and server-side profile roles are handled by later
+backend tasks.
+
 ### Account creation rules
 
 -   Users authenticate with email and password through Firebase
