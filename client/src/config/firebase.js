@@ -1,5 +1,6 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -22,6 +23,7 @@ const firebaseApp = isFirebaseConfigured
   : null;
 
 export const firebaseAuth = firebaseApp ? getAuth(firebaseApp) : null;
+export const firebaseDb = firebaseApp ? getFirestore(firebaseApp) : null;
 export const firebaseStorage = firebaseApp ? getStorage(firebaseApp) : null;
 
 export function requireFirebaseAuth() {
@@ -32,4 +34,14 @@ export function requireFirebaseAuth() {
   }
 
   return firebaseAuth;
+}
+
+export function requireFirebaseDb() {
+  if (!firebaseDb) {
+    throw new Error(
+      'Firebase is not configured. Add the required VITE_FIREBASE_* values to client/.env.',
+    );
+  }
+
+  return firebaseDb;
 }
