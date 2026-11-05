@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "firebase": "^13.2.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.511.0",
     "react": "^19.3.1",
