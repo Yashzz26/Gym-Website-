@@ -383,6 +383,17 @@ setup and deployment notes.
 Provide an `.env.example` containing placeholder names only. Never put
 real credentials in the repository.
 
+### Firebase client configuration
+
+The Vite client reads the public Firebase web app configuration from
+`client/.env`. Copy `client/.env.example` and set
+`VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
+`VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`,
+`VITE_FIREBASE_MESSAGING_SENDER_ID` and `VITE_FIREBASE_APP_ID` using the
+Firebase console. These values identify the browser app; Firebase Admin
+service-account credentials must remain server-only and must never be
+added to the client or source control.
+
 ## 14. Working Rules for the Coding Agent
 
 -   Study the attached PDF before coding.
