@@ -1,14 +1,27 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send } from 'lucide-react';
+import { sendPasswordReset } from '../../services/auth';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      await sendPasswordReset(email);
+      setSubmitted(true);
+    } catch {
+      setError('Unable to send a reset email. Check the address and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,11 +56,12 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
           <div>
-            <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
+            <label htmlFor="reset-email" style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
               Registered Email
             </label>
             <div style={{ position: 'relative' }}>
               <input
+                id="reset-email"
                 type="email"
                 placeholder="name@example.com"
                 value={email}
@@ -59,9 +73,11 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+          {error && <p role="alert" className="text-danger">{error}</p>}
+
+          <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isSubmitting}>
             <Send size={16} />
-            <span>Send Reset Link</span>
+            <span>{isSubmitting ? 'Sending…' : 'Send Reset Link'}</span>
           </button>
 
           <div style={{ textAlign: 'center', marginTop: 'var(--spacing-2)' }}>

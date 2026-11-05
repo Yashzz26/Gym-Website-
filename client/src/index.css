@@ -228,3 +228,7 @@ textarea::placeholder {
 .text-muted {
   color: var(--color-text-muted);
 }
+
+.text-danger {
+  color: var(--color-danger);
+}

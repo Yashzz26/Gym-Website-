@@ -1,17 +1,40 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { registerWithEmail } from '../../services/auth';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'member',
   });
+  const [status, setStatus] = useState({ type: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setStatus({ type: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      await registerWithEmail(formData);
+      setStatus({
+        type: 'success',
+        message: 'Account created. Check your email to verify it before signing in.',
+      });
+      setFormData({ name: '', email: '', password: '' });
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message:
+          error.code === 'auth/email-already-in-use'
+            ? 'An account already exists for this email.'
+            : 'Unable to create your account. Check the details and try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -30,11 +53,12 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
         <div>
-          <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
+          <label htmlFor="register-name" style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
             Full Name
           </label>
           <div style={{ position: 'relative' }}>
             <input
+              id="register-name"
               type="text"
               placeholder="Full Name"
               value={formData.name}
@@ -47,11 +71,12 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
+          <label htmlFor="register-email" style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
             Email Address
           </label>
           <div style={{ position: 'relative' }}>
             <input
+              id="register-email"
               type="email"
               placeholder="name@example.com"
               value={formData.email}
@@ -64,11 +89,12 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
+          <label htmlFor="register-password" style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
             Password
           </label>
           <div style={{ position: 'relative' }}>
             <input
+              id="register-password"
               type="password"
               placeholder="••••••••"
               value={formData.password}
@@ -80,23 +106,14 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div>
-          <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
-            Account Role
-          </label>
-          <select
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            style={{ width: '100%' }}
-          >
-            <option value="member">Member (Join Online)</option>
-            <option value="trainer">Trainer (Pending Approval)</option>
-            <option value="reception">Reception (Pending Approval)</option>
-          </select>
-        </div>
+        {status.message && (
+          <p role="alert" className={status.type === 'error' ? 'text-danger' : 'text-accent'}>
+            {status.message}
+          </p>
+        )}
 
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 'var(--spacing-2)' }}>
-          <span>Register</span>
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 'var(--spacing-2)' }} disabled={isSubmitting}>
+          <span>{isSubmitting ? 'Creating account…' : 'Register'}</span>
           <ArrowRight size={16} />
         </button>
 

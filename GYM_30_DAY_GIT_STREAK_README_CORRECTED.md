@@ -206,11 +206,12 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 4 --- Thursday, 05 November 2026 --- Firebase client setup
 
--   [ ] **Task 7: Configure Firebase client SDK** \[S\]
+-   [x] **Task 7: Configure Firebase client SDK** \[S\]
     -   Add Firebase initialization using Vite environment variables and
         document the required public Firebase config keys.
     -   Commit: `chore(firebase): configure client SDK`
--   [ ] **Task 8: Add Firebase Auth email/password screens** \[M\]
+-   Commit hash: `4e6507f`
+-   [x] **Task 8: Add Firebase Auth email/password screens** \[M\]
     -   Build register and login forms with validation and Firebase
         email/password methods. Do not add role selection as a trusted
         privilege. Decide and document whether login requires verified
@@ -642,7 +643,7 @@ counts contribution days, not the number of commits as separate squares.
 
          3 04 Nov       \[x\]       \[x\]       \[x\]            2           d3e374e
 
-         4 05 Nov       \[ \]       \[ \]       \[ \]            0           
+         4 05 Nov       \[x\]       \[x\]       \[ \]            2           4e6507f; Task 2 commit in git history
 
          5 06 Nov       \[ \]       \[ \]       \[ \]            0           
 
