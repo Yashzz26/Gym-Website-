@@ -24,6 +24,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { logout } from '../services/auth';
+import { useAuth } from '../context/AuthContext';
 import './AppShell.css';
 
 /**
@@ -75,6 +76,7 @@ const ROLE_NAV_CONFIG = {
 export default function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
 
   // Active role group can be determined from current URL path or switched
   const currentPathRole = location.pathname.split('/')[1];
@@ -197,8 +199,10 @@ export default function AppShell() {
               <User size={16} />
             </div>
             <div className="user-info">
-              <span className="user-name">Active User</span>
-              <span className="user-role-tag">{activeRole}</span>
+              <span className="user-name">
+                {user?.displayName || user?.email || 'Signed-out visitor'}
+              </span>
+              <span className="user-role-tag">{isAuthenticated ? activeRole : 'preview'}</span>
             </div>
           </div>
         </div>
@@ -228,7 +232,7 @@ export default function AppShell() {
           <div className="header-right">
             <div className="status-indicator">
               <span className="status-ping"></span>
-              <span className="status-text">Online</span>
+              <span className="status-text">{isAuthenticated ? 'Online' : 'Signed out'}</span>
             </div>
             <button className="icon-btn" aria-label="Notifications">
               <Bell size={18} />
