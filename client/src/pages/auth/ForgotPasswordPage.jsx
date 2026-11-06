@@ -17,8 +17,12 @@ export default function ForgotPasswordPage() {
     try {
       await sendPasswordReset(email);
       setSubmitted(true);
-    } catch {
-      setError('Unable to send a reset email. Check the address and try again.');
+    } catch (error) {
+      setError(
+        error.code === 'auth/invalid-email'
+          ? 'Enter a valid email address.'
+          : 'Unable to send a reset email. Check the address and try again.',
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -23,6 +23,8 @@ import {
   Bell,
   ChevronRight,
 } from 'lucide-react';
+import { logout } from '../services/auth';
+import { useAuth } from '../context/AuthContext';
 import './AppShell.css';
 
 /**
@@ -74,6 +76,7 @@ const ROLE_NAV_CONFIG = {
 export default function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
 
   // Active role group can be determined from current URL path or switched
   const currentPathRole = location.pathname.split('/')[1];
@@ -90,6 +93,17 @@ export default function AppShell() {
   const currentNavGroup = ROLE_NAV_CONFIG[activeRole] || ROLE_NAV_CONFIG.owner;
   const currentItem = currentNavGroup.items.find((item) => item.to === location.pathname);
   const currentTitle = currentItem ? currentItem.label : 'Gym Management System';
+  const [logoutError, setLogoutError] = useState('');
+
+  const handleLogout = async () => {
+    setLogoutError('');
+
+    try {
+      await logout();
+    } catch {
+      setLogoutError('Unable to sign out. Please try again.');
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -185,8 +199,10 @@ export default function AppShell() {
               <User size={16} />
             </div>
             <div className="user-info">
-              <span className="user-name">Active User</span>
-              <span className="user-role-tag">{activeRole}</span>
+              <span className="user-name">
+                {user?.displayName || user?.email || 'Signed-out visitor'}
+              </span>
+              <span className="user-role-tag">{isAuthenticated ? activeRole : 'preview'}</span>
             </div>
           </div>
         </div>
@@ -216,16 +232,31 @@ export default function AppShell() {
           <div className="header-right">
             <div className="status-indicator">
               <span className="status-ping"></span>
-              <span className="status-text">Online</span>
+              <span className="status-text">{isAuthenticated ? 'Online' : 'Signed out'}</span>
             </div>
             <button className="icon-btn" aria-label="Notifications">
               <Bell size={18} />
             </button>
-            <Link to="/login" className="btn btn-secondary header-login-btn">
-              <span>Login</span>
-            </Link>
+            <button
+              type="button"
+              className="btn btn-secondary header-login-btn"
+              onClick={handleLogout}
+            >
+              <LogOut size={16} />
+              <span>Log out</span>
+            </button>
           </div>
         </header>
+
+        {logoutError && (
+          <p
+            role="alert"
+            className="text-danger"
+            style={{ padding: 'var(--spacing-2) var(--spacing-6)' }}
+          >
+            {logoutError}
+          </p>
+        )}
 
         {/* Routed Page Content */}
         <main className="content-container">

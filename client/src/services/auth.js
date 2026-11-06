@@ -35,3 +35,8 @@ export async function sendPasswordReset(email) {
   const auth = requireFirebaseAuth();
   await sendPasswordResetEmail(auth, email);
 }
+
+export async function logout() {
+  const auth = requireFirebaseAuth();
+  await signOut(auth);
+}
