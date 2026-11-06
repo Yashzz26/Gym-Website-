@@ -6,12 +6,14 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import {
   loginWithEmail,
+  logout,
   registerWithEmail,
   sendPasswordReset,
 } from '../services/auth';
 
 vi.mock('../services/auth', () => ({
   loginWithEmail: vi.fn(),
+  logout: vi.fn(),
   registerWithEmail: vi.fn(),
   sendPasswordReset: vi.fn(),
 }));
@@ -77,5 +79,11 @@ describe('Firebase authentication screens', () => {
     await waitFor(() => {
       expect(sendPasswordReset).toHaveBeenCalledWith('member@example.com');
     });
+  });
+
+  it('logs out through the Firebase auth service', async () => {
+    await logout();
+
+    expect(logout).toHaveBeenCalled();
   });
 });

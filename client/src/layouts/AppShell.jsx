@@ -23,6 +23,7 @@ import {
   Bell,
   ChevronRight,
 } from 'lucide-react';
+import { logout } from '../services/auth';
 import './AppShell.css';
 
 /**
@@ -90,6 +91,17 @@ export default function AppShell() {
   const currentNavGroup = ROLE_NAV_CONFIG[activeRole] || ROLE_NAV_CONFIG.owner;
   const currentItem = currentNavGroup.items.find((item) => item.to === location.pathname);
   const currentTitle = currentItem ? currentItem.label : 'Gym Management System';
+  const [logoutError, setLogoutError] = useState('');
+
+  const handleLogout = async () => {
+    setLogoutError('');
+
+    try {
+      await logout();
+    } catch {
+      setLogoutError('Unable to sign out. Please try again.');
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -221,11 +233,26 @@ export default function AppShell() {
             <button className="icon-btn" aria-label="Notifications">
               <Bell size={18} />
             </button>
-            <Link to="/login" className="btn btn-secondary header-login-btn">
-              <span>Login</span>
-            </Link>
+            <button
+              type="button"
+              className="btn btn-secondary header-login-btn"
+              onClick={handleLogout}
+            >
+              <LogOut size={16} />
+              <span>Log out</span>
+            </button>
           </div>
         </header>
+
+        {logoutError && (
+          <p
+            role="alert"
+            className="text-danger"
+            style={{ padding: 'var(--spacing-2) var(--spacing-6)' }}
+          >
+            {logoutError}
+          </p>
+        )}
 
         {/* Routed Page Content */}
         <main className="content-container">
