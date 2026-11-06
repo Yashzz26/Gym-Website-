@@ -222,15 +222,15 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 5 --- Friday, 06 November 2026 --- Authentication experience
 
--   [ ] **Task 9: Implement logout and password reset** \[S\]
+-   [x] **Task 9: Implement logout and password reset** \[S\]
     -   Add logout and forgot-password flows using Firebase Auth; show
         useful success and error messages.
     -   Commit: `feat(auth): add logout and password reset`
--   [ ] **Task 10: Add auth state handling** \[M\]
+-   [x] **Task 10: Add auth state handling** \[M\]
     -   Create an auth context/provider that observes Firebase auth
         state and handles loading, signed-in and signed-out states.
     -   Commit: `feat(auth): manage authenticated user state`
--   [ ] Both planned commits pushed and visible on GitHub (Day 5).
+-   [x] Both planned commits pushed and visible on GitHub (Day 5).
 
 ### Day 6 --- Saturday, 07 November 2026 --- Backend Firebase security foundation
 
@@ -645,7 +645,7 @@ counts contribution days, not the number of commits as separate squares.
 
          4 05 Nov       \[x\]       \[x\]       \[ \]            2           4e6507f; Task 2 commit in git history
 
-         5 06 Nov       \[ \]       \[ \]       \[ \]            0           
+         5 06 Nov       \[x\]       \[x\]       \[x\]            2           d33eb59; auth state handling commit
 
          6 07 Nov       \[ \]       \[ \]       \[ \]            0           
 
