@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Layouts
 import AppShell from './layouts/AppShell';
@@ -44,7 +45,25 @@ import './App.css';
  * Configures route groups for Auth, Member, Reception, Trainer, and Owner areas,
  * with shared responsive application shell and 404 fallback.
  */
-function App() {
+function AppRoutes() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        role="status"
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          color: 'var(--color-text-secondary)',
+        }}
+      >
+        Loading your account…
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Routes>
@@ -100,6 +119,14 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
