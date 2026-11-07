@@ -242,7 +242,8 @@ counts contribution days, not the number of commits as separate squares.
         service-account credentials out of source control.
     -   Commit:
         `feat(server): configure Firebase Admin and verify ID tokens`
--   [ ] **Task 12: Author Firestore security rules v1 and emulator
+    -   Commit hash: `5a57a05`
+-   [x] **Task 12: Author Firestore security rules v1 and emulator
     tests** \[L\]
     -   Add least-privilege rules for `users`, `membershipPlans`,
         `memberships`, `attendance`, `payments` and `notifications`.
@@ -252,7 +253,7 @@ counts contribution days, not the number of commits as separate squares.
         client rules through the emulator.
     -   Commit:
         `feat(firebase): add Firestore security rules and emulator tests`
--   [ ] Both planned commits pushed and visible on GitHub (Day 6).
+-   [x] Both planned commits pushed and visible on GitHub (Day 6).
 
 ### Day 7 --- Sunday, 08 November 2026 --- Authorization foundation
 
@@ -647,7 +648,7 @@ counts contribution days, not the number of commits as separate squares.
 
          5 06 Nov       \[x\]       \[x\]       \[x\]            2           d33eb59; auth state handling commit
 
-         6 07 Nov       \[x\]       \[ \]       \[ \]            1           
+         6 07 Nov       \[x\]       \[x\]       \[x\]            2           5a57a05
 
          7 08 Nov       \[ \]       \[ \]       \[ \]            0           
 
