@@ -234,7 +234,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 6 --- Saturday, 07 November 2026 --- Backend Firebase security foundation
 
--   [ ] **Task 11: Configure Firebase Admin and ID-token verification**
+-   [x] **Task 11: Configure Firebase Admin and ID-token verification**
     \[M\]
     -   Initialize Firebase Admin in the server using environment
         configuration. Add middleware to verify Firebase ID tokens on
@@ -647,7 +647,7 @@ counts contribution days, not the number of commits as separate squares.
 
          5 06 Nov       \[x\]       \[x\]       \[x\]            2           d33eb59; auth state handling commit
 
-         6 07 Nov       \[ \]       \[ \]       \[ \]            0           
+         6 07 Nov       \[x\]       \[ \]       \[ \]            1           
 
          7 08 Nov       \[ \]       \[ \]       \[ \]            0           
 
