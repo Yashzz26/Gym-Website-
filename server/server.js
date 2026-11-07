@@ -6,7 +6,7 @@
  * 2. Cross-Origin Resource Sharing (configureCors)
  * 3. Rate limiting (configureRateLimiter)
  * 4. Body parsing (express.json, express.urlencoded)
- * 5. Feature routes (/api/health, ...)
+ * 5. Feature routes (/api/health, /api/auth, ...)
  * 6. 404 Route-not-found handler (notFound)
  * 7. Centralized structured error handler (errorHandler)
  */
@@ -24,6 +24,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 // Route imports
 import healthRouter from './routes/health.js';
+import authRouter from './routes/auth.js';
 
 // ---------------------------------------------------------------------------
 // App Factory
@@ -47,6 +48,7 @@ export const createApp = () => {
 
   // 5. Routes
   app.use('/api/health', healthRouter);
+  app.use('/api/auth', authRouter);
 
   return app;
 };
