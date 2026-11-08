@@ -7,10 +7,16 @@ const { onAuthStateChanged } = vi.hoisted(() => ({
 
 vi.mock('../config/firebase', () => ({
   firebaseAuth: { name: 'test-auth' },
+  firebaseDb: null, // Firestore not configured in tests
 }));
 
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged,
+}));
+
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(),
+  getDoc: vi.fn(() => Promise.resolve({ exists: () => false, data: () => ({}) })),
 }));
 
 import { AuthProvider, useAuth } from '../context/AuthContext';

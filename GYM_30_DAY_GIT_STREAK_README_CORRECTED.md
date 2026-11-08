@@ -257,7 +257,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 7 --- Sunday, 08 November 2026 --- Authorization foundation
 
--   [ ] **Task 13: Create server-side role and account-status
+-   [x] **Task 13: Create server-side role and account-status
     middleware** \[M\]
     -   Read role/status from trusted Firestore user data. Support
         owner, reception, trainer and member; block pending or suspended
@@ -265,11 +265,11 @@ counts contribution days, not the number of commits as separate squares.
         Emulator setup, seed data, one test user per role and required
         environment-variable names (placeholders only).
     -   Commit: `feat(server): enforce role and account status`
--   [ ] **Task 14: Protect frontend routes** \[M\]
+-   [x] **Task 14: Protect frontend routes** \[M\]
     -   Add route guards based on verified auth/profile state and role.
         Treat frontend guards as UX only; backend remains authoritative.
     -   Commit: `feat(client): protect routes by role`
--   [ ] Both planned commits pushed and visible on GitHub (Day 7).
+-   [x] Both planned commits pushed and visible on GitHub (Day 7).
 
 ### Day 8 --- Monday, 09 November 2026 --- User profiles and staff approval
 
@@ -650,7 +650,7 @@ counts contribution days, not the number of commits as separate squares.
 
          6 07 Nov       \[x\]       \[x\]       \[x\]            2           5a57a05
 
-         7 08 Nov       \[ \]       \[ \]       \[ \]            0           
+         7 08 Nov       \[x\]       \[x\]       \[x\]            2           592e613
 
          8 09 Nov       \[ \]       \[ \]       \[ \]            0           
 
