@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { firebaseAuth } from '../config/firebase';
+import { useProfile } from '../hooks/useProfile';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -19,13 +20,18 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  // Fetch Firestore profile once auth state resolves
+  const { profile, loading: profileLoading } = useProfile(loading ? null : user);
+
   const value = useMemo(
     () => ({
       user,
       loading,
+      profile,
+      profileLoading,
       isAuthenticated: Boolean(user),
     }),
-    [loading, user],
+    [loading, profile, profileLoading, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
