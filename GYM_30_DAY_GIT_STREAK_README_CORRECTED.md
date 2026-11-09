@@ -273,14 +273,15 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 8 --- Monday, 09 November 2026 --- User profiles and staff approval
 
--   [ ] **Task 15: Create user profile API and Firestore model** \[M\]
+-   [x] **Task 15: Create user profile API and Firestore model** \[M\]
     -   Implement safe profile creation/read/update endpoints and
         validate allowed fields. Prevent users from changing their own
         role or approval status. Add a test proving `PATCH /users/me`
         with `{role: 'owner'}` or `{approvalStatus: 'approved'}` returns
         403 and leaves Firestore unchanged.
     -   Commit: `feat(users): add profile API and validation`
--   [ ] **Task 16: Build staff registration and owner approval UI**
+    -   Commit hash: `f772d2c`
+-   [x] **Task 16: Build staff registration and owner approval UI**
     \[M\]
     -   Allow staff self-registration as pending and owner-created staff
         accounts/approval actions. Public registration must never grant
@@ -288,7 +289,7 @@ counts contribution days, not the number of commits as separate squares.
         verified payment; staff self-registration always requires owner
         approval; public registration must never grant the owner role.
     -   Commit: `feat(users): add staff approval workflow`
--   [ ] Both planned commits pushed and visible on GitHub (Day 8).
+-   [x] Both planned commits pushed and visible on GitHub (Day 8).
 
 ### Day 9 --- Tuesday, 10 November 2026 --- Owner dashboard shell
 
@@ -652,7 +653,7 @@ counts contribution days, not the number of commits as separate squares.
 
          7 08 Nov       \[x\]       \[x\]       \[x\]            2           592e613
 
-         8 09 Nov       \[ \]       \[ \]       \[ \]            0           
+         8 09 Nov       \[x\]       \[x\]       \[x\]            2           f772d2c
 
          9 10 Nov       \[ \]       \[ \]       \[ \]            0           
 
