@@ -25,6 +25,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 // Route imports
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
+import usersRouter from './routes/users.js';
 
 // ---------------------------------------------------------------------------
 // App Factory
@@ -49,6 +50,7 @@ export const createApp = () => {
   // 5. Routes
   app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/users', usersRouter);
 
   return app;
 };
