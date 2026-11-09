@@ -8,12 +8,32 @@ import {
 } from 'firebase/auth';
 import { requireFirebaseAuth } from '../config/firebase';
 
-export async function registerWithEmail({ name, email, password }) {
+export async function registerWithEmail({ name, email, password, role = 'member' }) {
   const auth = requireFirebaseAuth();
   const credential = await createUserWithEmailAndPassword(auth, email, password);
 
   await updateProfile(credential.user, { displayName: name });
   await sendEmailVerification(credential.user);
+
+  // Attempt to initialize profile in backend if reachable
+  try {
+    const token = await credential.user.getIdToken();
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    await fetch(`${apiUrl}/api/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        displayName: name,
+        role: role === 'owner' ? 'member' : role,
+      }),
+    });
+  } catch {
+    // Offline / unit test fallback
+  }
+
   await signOut(auth);
 }
 

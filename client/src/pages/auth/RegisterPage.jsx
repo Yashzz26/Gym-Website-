@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { registerWithEmail } from '../../services/auth';
 
 export default function RegisterPage() {
@@ -8,6 +8,7 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
+    role: 'member',
   });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,12 +19,28 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await registerWithEmail(formData);
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      if (formData.role && formData.role !== 'member') {
+        payload.role = formData.role;
+      }
+
+      await registerWithEmail(payload);
+
+      const successMsg =
+        formData.role === 'member'
+          ? 'Account created. Check your email to verify it before signing in. Membership plans can be selected upon signing in.'
+          : 'Staff registration submitted! Check your email to verify it. Your account is pending gym owner approval before activation.';
+
       setStatus({
         type: 'success',
-        message: 'Account created. Check your email to verify it before signing in.',
+        message: successMsg,
       });
-      setFormData({ name: '', email: '', password: '' });
+      setFormData({ name: '', email: '', password: '', role: 'member' });
     } catch (error) {
       setStatus({
         type: 'error',
@@ -47,11 +64,46 @@ export default function RegisterPage() {
           Create Account
         </h2>
         <p className="text-secondary" style={{ fontSize: 'var(--font-size-sm)' }}>
-          Register as a member or request staff access (pending owner approval).
+          Register as a member or apply for staff access.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
+        {/* Registration Profile Type */}
+        <div>
+          <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
+            Registration Type
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--spacing-2)' }}>
+            {[
+              { id: 'member', label: 'Member' },
+              { id: 'trainer', label: 'Trainer' },
+              { id: 'reception', label: 'Reception' },
+            ].map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`btn ${formData.role === option.id ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ fontSize: 'var(--font-size-xs)', padding: 'var(--spacing-2)' }}
+                onClick={() => setFormData({ ...formData, role: option.id })}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {formData.role !== 'member' ? (
+            <p style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: 'var(--color-warning, #f59e0b)', marginTop: 'var(--spacing-1)' }}>
+              <ShieldAlert size={14} />
+              Staff registrations require owner approval before access is granted.
+            </p>
+          ) : (
+            <p style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-1)' }}>
+              <CheckCircle2 size={14} />
+              Members become active upon membership plan selection.
+            </p>
+          )}
+        </div>
+
         <div>
           <label htmlFor="register-name" style={{ display: 'block', fontSize: 'var(--font-size-xs)', marginBottom: 'var(--spacing-1)', color: 'var(--color-text-secondary)' }}>
             Full Name
