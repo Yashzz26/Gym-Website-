@@ -6,6 +6,7 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import {
   loginWithEmail,
+  loginWithGoogle,
   logout,
   registerWithEmail,
   sendPasswordReset,
@@ -13,6 +14,7 @@ import {
 
 vi.mock('../services/auth', () => ({
   loginWithEmail: vi.fn(),
+  loginWithGoogle: vi.fn(),
   logout: vi.fn(),
   registerWithEmail: vi.fn(),
   sendPasswordReset: vi.fn(),
@@ -66,6 +68,30 @@ describe('Firebase authentication screens', () => {
         email: 'member@example.com',
         password: 'password123',
       });
+    });
+  });
+
+  it('signs in with Google from the login page', async () => {
+    loginWithGoogle.mockResolvedValueOnce({ uid: 'google-user-1', email: 'google@gym.com' });
+    renderPage(<LoginPage />);
+
+    const googleBtn = screen.getByRole('button', { name: /continue with google/i });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(loginWithGoogle).toHaveBeenCalled();
+    });
+  });
+
+  it('signs up with Google from the registration page', async () => {
+    loginWithGoogle.mockResolvedValueOnce({ uid: 'google-user-2', email: 'google2@gym.com' });
+    renderPage(<RegisterPage />);
+
+    const googleBtn = screen.getByRole('button', { name: /sign up with google/i });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(loginWithGoogle).toHaveBeenCalledWith('member');
     });
   });
 
