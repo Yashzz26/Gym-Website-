@@ -47,3 +47,4 @@ export async function updateGymSettings(settingsData, token) {
 
   return body.data;
 }
+

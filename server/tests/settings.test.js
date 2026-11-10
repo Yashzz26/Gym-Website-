@@ -252,3 +252,4 @@ describe('Gym Profile & Session Settings API (Day 9 Task 18)', () => {
     assert.equal(body.statusCode, 422);
   });
 });
+
