@@ -37,3 +37,4 @@ export const gymSettingsSchema = z.object({
 });
 
 export const updateGymSettingsSchema = gymSettingsSchema;
+

@@ -82,3 +82,4 @@ export const createGymSettingsService = (customDb = db) => {
 };
 
 export const gymSettingsService = createGymSettingsService();
+

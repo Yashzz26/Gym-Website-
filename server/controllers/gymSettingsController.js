@@ -36,3 +36,4 @@ export const createGymSettingsController = (service = defaultService) => {
 };
 
 export const gymSettingsController = createGymSettingsController();
+
