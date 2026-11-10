@@ -149,9 +149,14 @@ textarea::placeholder {
 .card {
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: var(--spacing-6);
   box-shadow: var(--shadow-card);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--color-border-default);
 }
 
 .btn {
@@ -167,13 +172,15 @@ textarea::placeholder {
 }
 
 .btn-primary {
-  background-color: var(--color-accent);
+  background: linear-gradient(135deg, var(--color-accent) 0%, #0066d6 100%);
   color: var(--color-accent-contrast);
+  box-shadow: 0 4px 14px rgba(0, 128, 255, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--color-accent-hover);
+  background: linear-gradient(135deg, #0d8cff 0%, #0070f3 100%);
   box-shadow: var(--shadow-accent-glow);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -184,7 +191,7 @@ textarea::placeholder {
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--color-bg-elevated);
-  border-color: var(--color-border-strong);
+  border-color: var(--color-accent-border);
 }
 
 .badge {
