@@ -33,6 +33,7 @@ import DietPlanPage from './pages/trainer/DietPlanPage';
 import WorkoutBuilderPage from './pages/trainer/WorkoutBuilderPage';
 
 // Owner Pages
+import OwnerDashboardPage from './pages/owner/OwnerDashboardPage';
 import DailyReportPage from './pages/owner/DailyReportPage';
 import InactiveMembersPage from './pages/owner/InactiveMembersPage';
 import PlansManagementPage from './pages/owner/PlansManagementPage';
@@ -142,7 +143,8 @@ function AppRoutes() {
               <Route element={<RoleGuard allowedRoles={['owner']} />}>
                 <Route path="/owner">
                   <Route index element={<Navigate to="/owner/dashboard" replace />} />
-                  <Route path="dashboard" element={<DailyReportPage />} />
+                  <Route path="dashboard" element={<OwnerDashboardPage />} />
+                  <Route path="reports" element={<DailyReportPage />} />
                   <Route path="inactive" element={<InactiveMembersPage />} />
                   <Route path="plans" element={<PlansManagementPage />} />
                   <Route path="staff" element={<StaffApprovalPage />} />
