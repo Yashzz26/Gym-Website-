@@ -31,10 +31,10 @@ describe('Firebase authentication screens', () => {
 
   it('signs in with email and password', async () => {
     renderPage(<LoginPage />);
-    fireEvent.change(screen.getByPlaceholderText('name@example.com'), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: 'member@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: 'password123' },
     });
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
@@ -51,16 +51,16 @@ describe('Firebase authentication screens', () => {
     renderPage(<RegisterPage />);
     expect(screen.queryByLabelText(/account role/i)).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/full name/i), {
+    fireEvent.change(screen.getByLabelText(/name/i), {
       target: { value: 'Member One' },
     });
-    fireEvent.change(screen.getByLabelText(/email address/i), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: 'member@example.com' },
     });
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /register/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^sign up$|^register account$/i }));
 
     await waitFor(() => {
       expect(registerWithEmail).toHaveBeenCalledWith({
