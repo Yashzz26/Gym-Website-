@@ -1,6 +1,6 @@
 import { getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -26,10 +26,19 @@ export const firebaseAuth = firebaseApp ? getAuth(firebaseApp) : null;
 export const firebaseDb = firebaseApp ? getFirestore(firebaseApp) : null;
 export const firebaseStorage = firebaseApp ? getStorage(firebaseApp) : null;
 
+// Connect to Auth & Firestore emulators if specified
+if (firebaseAuth && import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST) {
+  try {
+    connectAuthEmulator(firebaseAuth, import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST, { disableWarnings: true });
+  } catch {
+    // Already connected
+  }
+}
+
 export function requireFirebaseAuth() {
   if (!firebaseAuth) {
     throw new Error(
-      'Firebase is not configured. Add the required VITE_FIREBASE_* values to client/.env.',
+      'Firebase is not configured. Please create client/.env with your Firebase configuration (VITE_FIREBASE_API_KEY, etc.).',
     );
   }
 
@@ -39,7 +48,7 @@ export function requireFirebaseAuth() {
 export function requireFirebaseDb() {
   if (!firebaseDb) {
     throw new Error(
-      'Firebase is not configured. Add the required VITE_FIREBASE_* values to client/.env.',
+      'Firebase is not configured. Please create client/.env with your Firebase configuration (VITE_FIREBASE_API_KEY, etc.).',
     );
   }
 
