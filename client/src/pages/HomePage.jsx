@@ -11,10 +11,14 @@ import {
   UserX,
   ArrowRight,
   Shield,
+  ShieldAlert,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './HomePage.css';
 
 export default function HomePage() {
+  const { profile } = useAuth();
+
   const portals = [
     {
       title: 'Member Portal',
@@ -62,6 +66,58 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
+      {profile?.approvalStatus === 'pending' && (
+        <div
+          role="status"
+          style={{
+            backgroundColor: 'rgba(245, 158, 11, 0.12)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            color: '#fbbf24',
+          }}
+        >
+          <ShieldAlert size={22} style={{ flexShrink: 0 }} />
+          <div>
+            <strong style={{ display: 'block', marginBottom: '2px' }}>
+              Account Awaiting Approval
+            </strong>
+            <span style={{ fontSize: '0.875rem', color: '#fef3c7' }}>
+              Your account is pending gym owner activation for staff roles. You can view gym plans and explore public information below.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {profile?.approvalStatus === 'suspended' && (
+        <div
+          role="alert"
+          style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            color: '#ef4444',
+          }}
+        >
+          <ShieldAlert size={22} style={{ flexShrink: 0 }} />
+          <div>
+            <strong style={{ display: 'block', marginBottom: '2px' }}>Account Suspended</strong>
+            <span style={{ fontSize: '0.875rem', color: '#fca5a5' }}>
+              Your account has been suspended. Please contact the gym management for assistance.
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="home-hero">
         <span className="badge badge-accent">React Router & App Shell Configured</span>
         <h1 className="home-title">

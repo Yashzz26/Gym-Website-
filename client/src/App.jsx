@@ -92,20 +92,22 @@ function AppRoutes() {
         {/* Protected Route Group — must be signed in                        */}
         {/* ---------------------------------------------------------------- */}
         <Route element={<ProtectedRoute />}>
-          {/* Account-status gate: blocks pending/suspended users            */}
-          <Route element={<ActiveGuard />}>
-            {/* Application Shell wraps all role portals                     */}
-            <Route element={<AppShell />}>
-              {/* Home / landing */}
-              <Route path="/" element={<HomePage />} />
+          {/* Application Shell wraps all logged-in views                      */}
+          <Route element={<AppShell />}>
+            {/* Home / landing portal dashboard — accessible to all users     */}
+            <Route path="/" element={<HomePage />} />
 
+            {/* Member joining / plan selection — open to new and pending members */}
+            <Route path="/member/join" element={<OnlineJoiningPage />} />
+
+            {/* Account-status gate: blocks pending/suspended staff from operational portals */}
+            <Route element={<ActiveGuard />}>
               {/* ---------------------------------------------------------- */}
               {/* Member Routes — role: member                                */}
               {/* ---------------------------------------------------------- */}
               <Route element={<RoleGuard allowedRoles={['member', 'owner']} />}>
                 <Route path="/member">
                   <Route index element={<Navigate to="/member/join" replace />} />
-                  <Route path="join" element={<OnlineJoiningPage />} />
                   <Route path="attendance" element={<QrAttendancePage />} />
                   <Route path="workout" element={<WorkoutPlanPage />} />
                   <Route path="profile" element={<MemberProfilePage />} />
@@ -151,10 +153,10 @@ function AppRoutes() {
                   <Route path="settings" element={<GymSettingsPage />} />
                 </Route>
               </Route>
-
-              {/* 404 Catch-all */}
-              <Route path="*" element={<NotFoundPage />} />
             </Route>
+
+            {/* 404 Catch-all */}
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Route>
       </Routes>
