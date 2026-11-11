@@ -23,3 +23,4 @@ export const updatePlanSchema = createPlanSchema.partial();
 export const updatePlanStatusSchema = z.object({
   isActive: z.boolean(),
 });
+
