@@ -309,17 +309,18 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 10 --- Wednesday, 11 November 2026 --- Membership plans
 
--   [ ] **Task 19: Create membership plan backend APIs** \[M\]
+-   [x] **Task 19: Create membership plan backend APIs** \[M\]
     -   Implement owner-only create, update, activate/deactivate and
         list endpoints. Store duration and price in integer paise. Add
         `firestore.indexes.json` with composite indexes required by plan
         listing and active-plan queries, and document index deployment.
     -   Commit: `feat(plans): add membership plan APIs`
--   [ ] **Task 20: Build membership plan management UI** \[M\]
+    -   Commit hash: `3259245`
+-   [x] **Task 20: Build membership plan management UI** \[M\]
     -   Create plan list and forms for 1-month, 3-month and 12-month
         plans; support benefits, price, duration and active status.
     -   Commit: `feat(owner): manage membership plans`
--   [ ] Both planned commits pushed and visible on GitHub (Day 10).
+-   [x] Both planned commits pushed and visible on GitHub (Day 10).
 
 ### Day 11 --- Thursday, 12 November 2026 --- Member registration
 
