@@ -91,3 +91,4 @@ export async function setPlanStatus(planId, isActive, token) {
 
   return body.data;
 }
+

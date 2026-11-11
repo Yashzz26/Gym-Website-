@@ -212,3 +212,4 @@ describe('PlansManagementPage — Membership Plans UI', () => {
     expect(screen.getByText(/Plan '1 Month Starter' updated successfully/i)).toBeInTheDocument();
   });
 });
+

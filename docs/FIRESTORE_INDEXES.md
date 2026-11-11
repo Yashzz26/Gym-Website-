@@ -62,3 +62,4 @@ When running the local emulator suite, the emulator automatically loads `firesto
 ```bash
 firebase emulators:start --only firestore
 ```
+
