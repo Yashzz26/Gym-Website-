@@ -27,6 +27,7 @@ import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
 import usersRouter from './routes/users.js';
 import settingsRouter from './routes/settings.js';
+import plansRouter from './routes/plans.js';
 
 // ---------------------------------------------------------------------------
 // App Factory
@@ -53,6 +54,7 @@ export const createApp = () => {
   app.use('/api/auth', authRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/settings', settingsRouter);
+  app.use('/api/plans', plansRouter);
 
   return app;
 };
