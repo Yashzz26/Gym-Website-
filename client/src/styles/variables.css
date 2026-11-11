@@ -9,34 +9,35 @@
      1. COLOR PALETTE
      ============================================================ */
 
-  /* Surface / Background Colors (Dark Navy & Black) */
-  --color-bg-primary: #0a0e1a;        /* Deep canvas navy/black background */
-  --color-bg-secondary: #0f172a;      /* Cards, panels, sidebar background */
-  --color-bg-tertiary: #1e293b;       /* Inputs, elevated containers, hover state */
-  --color-bg-elevated: #243247;       /* Modals, popovers, dropdown menus */
-  --color-bg-overlay: rgba(10, 14, 26, 0.8); /* Modal / drawer backdrop */
+  /* Surface / Background Colors (FitMax Midnight Navy & Black) */
+  --color-bg-primary: #070d18;        /* Deep midnight canvas */
+  --color-bg-secondary: #0d1627;      /* Cards, panels, sidebar surface */
+  --color-bg-tertiary: #142138;       /* Inputs, elevated containers, hover state */
+  --color-bg-elevated: #1c2e4d;       /* Modals, popovers, dropdown menus */
+  --color-bg-overlay: rgba(7, 13, 24, 0.85); /* Modal / drawer backdrop */
 
-  /* Brand / Accent Colors (Neon Lime) */
-  --color-accent: #c6f135;            /* Electric neon lime primary accent */
-  --color-accent-hover: #b5e028;      /* Hover state for buttons/links */
-  --color-accent-active: #9ec81e;     /* Pressed / active accent state */
-  --color-accent-subtle: rgba(198, 241, 53, 0.12); /* Subtle badge / highlight fill */
-  --color-accent-border: rgba(198, 241, 53, 0.35); /* Subtle accent border */
-  --color-accent-glow: rgba(198, 241, 53, 0.25);   /* Neon glow shadow */
-  --color-accent-contrast: #0a0e1a;   /* High-contrast dark text on lime fill */
+  /* Brand / Accent Colors (FitMax Electric Vibrant Blue) */
+  --color-accent: #0080ff;            /* Vibrant royal electric blue primary accent */
+  --color-accent-hover: #0070e0;      /* Hover state for buttons/links */
+  --color-accent-active: #005fc2;     /* Pressed / active accent state */
+  --color-accent-subtle: rgba(0, 128, 255, 0.12); /* Subtle badge / highlight fill */
+  --color-accent-border: rgba(0, 128, 255, 0.35); /* Subtle accent border */
+  --color-accent-glow: rgba(0, 128, 255, 0.35);   /* Electric blue glow shadow */
+  --color-accent-contrast: #ffffff;   /* High-contrast crisp white text on blue fill */
 
   /* Typography / Content Colors */
   --color-text-primary: #f8fafc;      /* Primary high-contrast text */
   --color-text-secondary: #94a3b8;    /* Secondary / muted descriptive text */
   --color-text-muted: #64748b;        /* Captions, subtle hints, placeholders */
   --color-text-disabled: #475569;     /* Disabled element text */
-  --color-text-inverse: #0a0e1a;      /* Inverted text on bright backgrounds */
+  --color-text-inverse: #070d18;      /* Inverted text on bright backgrounds */
 
   /* Border / Divider Colors */
-  --color-border-subtle: #1e293b;     /* Delicate separators, card borders */
-  --color-border-default: #334155;    /* Default input & container borders */
-  --color-border-strong: #475569;     /* Active borders, high-contrast dividers */
-  --color-border-focus: #c6f135;      /* Focus ring color */
+  --color-border: #17243a;            /* Alias for default divider */
+  --color-border-subtle: #17243a;     /* Delicate separators, card borders */
+  --color-border-default: #223553;    /* Default input & container borders */
+  --color-border-strong: #334b72;     /* Active borders, high-contrast dividers */
+  --color-border-focus: #0080ff;      /* Focus ring color */
 
   /* Feedback / Semantic Colors */
   --color-success: #10b981;           /* Success / Verified emerald */
@@ -116,8 +117,8 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --shadow-accent-glow: 0 0 20px rgba(198, 241, 53, 0.35);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-accent-glow: 0 0 24px rgba(0, 128, 255, 0.35);
 
   /* ============================================================
      6. TRANSITIONS & TIMING

@@ -293,32 +293,34 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 9 --- Tuesday, 10 November 2026 --- Owner dashboard shell
 
--   [ ] **Task 17: Build owner dashboard layout** \[M\]
+-   [x] **Task 17: Build owner dashboard layout** \[M\]
     -   Create the owner dashboard page with navigation and clear empty
         states for report cards, member totals and quick actions.
     -   Commit: `feat(owner): build dashboard layout`
--   [ ] **Task 18: Add gym settings management** \[M\]
+    -   Commit hash: `1f32932`
+-   [x] **Task 18: Add gym settings management** \[M\]
     -   Create gym profile and session-time settings UI/API with
         owner-only editing and validated defaults. Define session
         settings as gym operating hours plus configurable
         morning/evening session windows and durations; store them in gym
         settings and expose them only to authorized views.
     -   Commit: `feat(settings): manage gym profile and sessions`
--   [ ] Both planned commits pushed and visible on GitHub (Day 9).
+-   [x] Both planned commits pushed and visible on GitHub (Day 9).
 
 ### Day 10 --- Wednesday, 11 November 2026 --- Membership plans
 
--   [ ] **Task 19: Create membership plan backend APIs** \[M\]
+-   [x] **Task 19: Create membership plan backend APIs** \[M\]
     -   Implement owner-only create, update, activate/deactivate and
         list endpoints. Store duration and price in integer paise. Add
         `firestore.indexes.json` with composite indexes required by plan
         listing and active-plan queries, and document index deployment.
     -   Commit: `feat(plans): add membership plan APIs`
--   [ ] **Task 20: Build membership plan management UI** \[M\]
+    -   Commit hash: `3259245`
+-   [x] **Task 20: Build membership plan management UI** \[M\]
     -   Create plan list and forms for 1-month, 3-month and 12-month
         plans; support benefits, price, duration and active status.
     -   Commit: `feat(owner): manage membership plans`
--   [ ] Both planned commits pushed and visible on GitHub (Day 10).
+-   [x] Both planned commits pushed and visible on GitHub (Day 10).
 
 ### Day 11 --- Thursday, 12 November 2026 --- Member registration
 
