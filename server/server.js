@@ -29,6 +29,7 @@ import usersRouter from './routes/users.js';
 import settingsRouter from './routes/settings.js';
 import plansRouter from './routes/plans.js';
 import receptionRouter from './routes/reception.js';
+import membersRouter from './routes/members.js';
 
 // ---------------------------------------------------------------------------
 // App Factory
@@ -57,6 +58,7 @@ export const createApp = () => {
   app.use('/api/settings', settingsRouter);
   app.use('/api/plans', plansRouter);
   app.use('/api/reception', receptionRouter);
+  app.use('/api/members', membersRouter);
 
   return app;
 };
