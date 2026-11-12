@@ -38,3 +38,4 @@ export const createMemberController = (service = defaultService) => {
 };
 
 export const memberController = createMemberController();
+

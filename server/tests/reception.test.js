@@ -335,3 +335,4 @@ describe('Reception Member Registration API (Day 11 Task 21)', () => {
     assert.ok(body.data.length >= 3);
   });
 });
+

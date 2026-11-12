@@ -39,3 +39,4 @@ export const registerMemberSchema = z.object({
   assignedPlanId: z.string().trim().optional(),
   whatsappOptIn: z.boolean().default(true),
 });
+
