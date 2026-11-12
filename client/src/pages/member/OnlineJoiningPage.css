@@ -1,0 +1,303 @@
+/* ============================================================
+   OnlineJoiningPage.css — Online Member Joining & Plan Selection
+   FitMax Electric Blue & Midnight Theme
+   ============================================================ */
+
+.online-joining-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6, 1.5rem);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.joining-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 0.5rem);
+}
+
+.joining-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary, #ffffff);
+}
+
+.joining-subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary, #94a3b8);
+  line-height: 1.5;
+}
+
+/* Stepper Indicator */
+.joining-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+}
+
+.step-item.active {
+  color: var(--color-accent, #0080ff);
+  font-weight: 600;
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  background-color: var(--color-bg-tertiary, #142138);
+  border: 1px solid var(--color-border-default, #223553);
+}
+
+.step-item.active .step-number {
+  background-color: var(--color-accent, #0080ff);
+  border-color: var(--color-accent, #0080ff);
+  color: #ffffff;
+}
+
+.step-connector {
+  width: 32px;
+  height: 1px;
+  background-color: var(--color-border-default, #223553);
+}
+
+/* Plan Cards Grid */
+.plans-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.joining-plan-card {
+  background-color: var(--color-bg-secondary, #0d1627);
+  border: 1px solid var(--color-border-subtle, #17243a);
+  border-radius: var(--radius-xl, 16px);
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.joining-plan-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 128, 255, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 128, 255, 0.15);
+}
+
+.joining-plan-card.featured {
+  background: linear-gradient(180deg, #101c33 0%, #0d1627 100%);
+  border-color: var(--color-accent, #0080ff);
+  box-shadow: 0 10px 30px rgba(0, 128, 255, 0.2);
+}
+
+.plan-badge-pill {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: linear-gradient(135deg, #0080ff 0%, #0056b8 100%);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 128, 255, 0.4);
+}
+
+.plan-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plan-title-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #ffffff);
+}
+
+.plan-duration-text {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+.plan-price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+}
+
+.plan-currency {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-accent, #0080ff);
+}
+
+.plan-amount {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--color-text-primary, #ffffff);
+  letter-spacing: -0.03em;
+}
+
+.plan-period {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+  margin-left: 2px;
+}
+
+.plan-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  padding: 1rem 0;
+  border-top: 1px solid var(--color-border-subtle, #17243a);
+  border-bottom: 1px solid var(--color-border-subtle, #17243a);
+}
+
+.plan-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.84375rem;
+  color: var(--color-text-secondary, #cbd5e1);
+}
+
+.plan-feature-icon {
+  color: var(--color-accent, #0080ff);
+  flex-shrink: 0;
+}
+
+.plan-select-btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Confirmation Card */
+.joining-confirm-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: var(--color-bg-secondary, #0d1627);
+  border: 1px solid var(--color-border-subtle, #17243a);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.confirm-summary-box {
+  background-color: var(--color-bg-tertiary, #142138);
+  border: 1px solid var(--color-border-default, #223553);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+.summary-row.total {
+  border-top: 1px solid var(--color-border-subtle, #17243a);
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #ffffff);
+}
+
+/* Payment Pending State Display */
+.payment-pending-card {
+  max-width: 650px;
+  margin: 0 auto;
+  background-color: var(--color-bg-secondary, #0d1627);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  box-shadow: 0 12px 35px rgba(245, 158, 11, 0.1);
+}
+
+.pending-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pending-details-box {
+  width: 100%;
+  background-color: var(--color-bg-tertiary, #142138);
+  border: 1px solid var(--color-border-default, #223553);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}

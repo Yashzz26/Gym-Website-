@@ -324,12 +324,12 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 11 --- Thursday, 12 November 2026 --- Member registration
 
--   [ ] **Task 21: Build reception member registration** \[M\]
+-   [x] **Task 21: Build reception member registration** [M]
     -   Create a validated member form and backend flow that
         creates/links Firebase Auth identity and profile safely. Handle
         duplicate email cases.
     -   Commit: `feat(reception): add member registration`
--   [ ] **Task 22: Build online joining plan selection** \[M\]
+-   [x] **Task 22: Build online joining plan selection** [M]
     -   Create the public/member-facing joining page with plan
         comparison, registration details and clear payment-pending
         states. For online joining, create a member profile with
@@ -338,7 +338,7 @@ counts contribution days, not the number of commits as separate squares.
         membership. Document the state machine in
         `docs/DATABASE_SCHEMA.md`.
     -   Commit: `feat(member): build online joining flow`
--   [ ] Both planned commits pushed and visible on GitHub (Day 11).
+-   [x] Both planned commits pushed and visible on GitHub (Day 11).
 
 ### Day 12 --- Friday, 13 November 2026 --- Membership lifecycle
 
