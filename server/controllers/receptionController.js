@@ -37,3 +37,4 @@ export const createReceptionController = (service = defaultService) => {
 };
 
 export const receptionController = createReceptionController();
+

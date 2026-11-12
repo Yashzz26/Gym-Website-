@@ -123,3 +123,4 @@ describe('RegisterMemberPage — In-Person Member Registration (Day 11 Task 21)'
     ).toBeInTheDocument();
   });
 });
+

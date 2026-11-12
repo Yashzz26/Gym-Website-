@@ -165,3 +165,4 @@ export const createReceptionService = (customDb = defaultDb, customAuth = defaul
 };
 
 export const receptionService = createReceptionService();
+

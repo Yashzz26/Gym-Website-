@@ -130,3 +130,4 @@ describe('OnlineJoiningPage — Member Online Plan Selection (Day 11 Task 22)', 
     expect(screen.getByText('₹11,999')).toBeInTheDocument();
   });
 });
+

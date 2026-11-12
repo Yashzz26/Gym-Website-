@@ -46,3 +46,4 @@ export const createReceptionRouter = ({
 
 export const receptionRouter = createReceptionRouter();
 export default receptionRouter;
+
