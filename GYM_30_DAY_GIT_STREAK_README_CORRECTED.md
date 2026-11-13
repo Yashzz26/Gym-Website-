@@ -342,7 +342,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 12 --- Friday, 13 November 2026 --- Membership lifecycle
 
--   [ ] **Task 23: Create membership creation and renewal APIs** \[M\]
+-   [x] **Task 23: Create membership creation and renewal APIs** [M]
     -   Implement membership records with start/end dates, status, plan
         reference and renewal history. Never overwrite old membership
         periods. Store dates as Firestore Timestamps (or consistently
@@ -350,11 +350,11 @@ counts contribution days, not the number of commits as separate squares.
         display timezone in gym settings and document the convention in
         `docs/DATABASE_SCHEMA.md`.
     -   Commit: `feat(memberships): add membership lifecycle APIs`
--   [ ] **Task 24: Build member profile and membership views** \[M\]
+-   [x] **Task 24: Build member profile and membership views** [M]
     -   Show member profile, current/previous memberships, expiry date
         and status to permitted roles.
     -   Commit: `feat(members): add profile and membership views`
--   [ ] Both planned commits pushed and visible on GitHub (Day 12).
+-   [x] Both planned commits pushed and visible on GitHub (Day 12).
 
 ### Day 13 --- Saturday, 14 November 2026 --- Payments foundation
 
