@@ -9,9 +9,11 @@ import OnlineJoiningPage from '../pages/member/OnlineJoiningPage';
 import { AuthContext } from '../context/AuthContext';
 import * as planService from '../services/planService';
 import * as memberService from '../services/memberService';
+import * as paymentService from '../services/paymentService';
 
 vi.mock('../services/planService');
 vi.mock('../services/memberService');
+vi.mock('../services/paymentService');
 
 function renderWithAuth(ui, authValue = {}) {
   const defaultAuth = {
@@ -128,6 +130,99 @@ describe('OnlineJoiningPage — Member Online Plan Selection (Day 11 Task 22)', 
     expect(await screen.findByText(/status: payment_pending/i)).toBeInTheDocument();
     expect(screen.getByText('12 Months Elite')).toBeInTheDocument();
     expect(screen.getByText('₹11,999')).toBeInTheDocument();
+  });
+
+  it('integrates Razorpay Checkout: requests server order and shows success state on gateway response', async () => {
+    memberService.getMyMembership.mockResolvedValueOnce({
+      membershipId: 'existing-pending-1',
+      planId: 'plan-3-months',
+      planName: '3 Months Pro',
+      durationDays: 90,
+      priceInPaise: 399900,
+      status: 'payment_pending',
+    });
+
+    paymentService.createRazorpayOrder.mockResolvedValueOnce({
+      orderId: 'order_test_12345',
+      amount: 399900,
+      currency: 'INR',
+      keyId: 'rzp_test_mock',
+      plan: { name: '3 Months Pro', planId: 'plan-3-months' },
+    });
+
+    paymentService.loadRazorpayScript.mockResolvedValueOnce(true);
+
+    let capturedOptions = null;
+    window.Razorpay = vi.fn().mockImplementation(function (options) {
+      capturedOptions = options;
+      return {
+        open: vi.fn().mockImplementation(() => {
+          // Simulate user successfully completing payment in the modal
+          options.handler({
+            razorpay_payment_id: 'pay_test_98765',
+            razorpay_order_id: 'order_test_12345',
+            razorpay_signature: 'sig_mock_signature',
+          });
+        }),
+        on: vi.fn(),
+      };
+    });
+
+    renderWithAuth(<OnlineJoiningPage />);
+
+    const payBtn = await screen.findByRole('button', { name: /pay online via razorpay/i });
+    fireEvent.click(payBtn);
+
+    await waitFor(() => {
+      expect(paymentService.createRazorpayOrder).toHaveBeenCalledWith(
+        { planId: 'plan-3-months' },
+        'fake-token'
+      );
+    });
+
+    expect(await screen.findByText(/payment captured at razorpay/i)).toBeInTheDocument();
+    expect(screen.getByText('pay_test_98765')).toBeInTheDocument();
+    expect(screen.getByText('order_test_12345')).toBeInTheDocument();
+    expect(screen.getByText(/awaiting signature capture/i)).toBeInTheDocument();
+  });
+
+  it('shows failure notice and allows retry when checkout is dismissed or errors', async () => {
+    memberService.getMyMembership.mockResolvedValueOnce({
+      membershipId: 'existing-pending-1',
+      planId: 'plan-3-months',
+      planName: '3 Months Pro',
+      durationDays: 90,
+      priceInPaise: 399900,
+      status: 'payment_pending',
+    });
+
+    paymentService.createRazorpayOrder.mockResolvedValueOnce({
+      orderId: 'order_test_12345',
+      amount: 399900,
+      currency: 'INR',
+      keyId: 'rzp_test_mock',
+      plan: { name: '3 Months Pro', planId: 'plan-3-months' },
+    });
+
+    paymentService.loadRazorpayScript.mockResolvedValueOnce(true);
+
+    window.Razorpay = vi.fn().mockImplementation(function (options) {
+      return {
+        open: vi.fn().mockImplementation(() => {
+          // Simulate user closing the Razorpay modal
+          options.modal.ondismiss();
+        }),
+        on: vi.fn(),
+      };
+    });
+
+    renderWithAuth(<OnlineJoiningPage />);
+
+    const payBtn = await screen.findByRole('button', { name: /pay online via razorpay/i });
+    fireEvent.click(payBtn);
+
+    expect(await screen.findByText(/checkout not completed/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry online payment/i })).toBeInTheDocument();
   });
 });
 

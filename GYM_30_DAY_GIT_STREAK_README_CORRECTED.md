@@ -358,7 +358,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 13 --- Saturday, 14 November 2026 --- Payments foundation
 
--   [ ] **Task 25: Create Razorpay order API** \[M\]
+-   [x] **Task 25: Create Razorpay order API** [M]
     -   Add server-side Razorpay client configuration and authenticated
         order creation. Validate plan/amount on the server; never accept
         a trusted amount from React. Reject order creation if the plan
@@ -369,12 +369,12 @@ counts contribution days, not the number of commits as separate squares.
         HTTPS tunnel or staging URL before Day 14 webhook testing; use
         Razorpay test mode until live KYC/approval is complete.
     -   Commit: `feat(payments): create Razorpay orders`
--   [ ] **Task 26: Integrate Razorpay Checkout UI** \[M\]
+-   [x] **Task 26: Integrate Razorpay Checkout UI** [M]
     -   Connect the joining flow to Razorpay Checkout using the
         server-created order and show pending/success/failure states
         without activating membership yet.
     -   Commit: `feat(client): integrate Razorpay Checkout`
--   [ ] Both planned commits pushed and visible on GitHub (Day 13).
+-   [x] Both planned commits pushed and visible on GitHub (Day 13).
 
 ### Day 14 --- Sunday, 15 November 2026 --- Payment verification
 

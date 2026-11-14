@@ -9,10 +9,12 @@ import {
   ShieldCheck,
   AlertCircle,
   RefreshCw,
+  XCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { listPlans } from '../../services/planService';
 import { selectPlan, getMyMembership } from '../../services/memberService';
+import { createRazorpayOrder, loadRazorpayScript } from '../../services/paymentService';
 import './OnlineJoiningPage.css';
 
 export default function OnlineJoiningPage() {
@@ -34,6 +36,11 @@ export default function OnlineJoiningPage() {
     address: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Razorpay Checkout UI States: 'idle' | 'opening' | 'success' | 'failed'
+  const [checkoutStatus, setCheckoutStatus] = useState('idle');
+  const [checkoutDetails, setCheckoutDetails] = useState(null);
+  const [checkoutError, setCheckoutError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +132,74 @@ export default function OnlineJoiningPage() {
     setCurrentMembership(null);
     setStep(1);
     setError('');
+    setCheckoutStatus('idle');
+    setCheckoutDetails(null);
+    setCheckoutError('');
+  };
+
+  const handlePayOnline = async () => {
+    if (!currentMembership?.planId) return;
+    setCheckoutStatus('opening');
+    setCheckoutError('');
+
+    try {
+      const token = user ? await user.getIdToken() : null;
+
+      // 1. Create server-side order with strictly server-verified price
+      const orderData = await createRazorpayOrder({ planId: currentMembership.planId }, token);
+
+      // 2. Ensure Razorpay Checkout SDK is available
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded || typeof window.Razorpay === 'undefined') {
+        throw new Error('Razorpay checkout SDK could not be loaded. Please check your internet connection.');
+      }
+
+      // 3. Configure Checkout options
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'FitMax Gym',
+        description: `${orderData.plan.name} Membership`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: profile?.displayName || user?.displayName || '',
+          email: profile?.email || user?.email || '',
+          contact: profile?.phone || formData.phone || '',
+        },
+        theme: {
+          color: '#0066ff',
+        },
+        handler: function (response) {
+          // Captured at gateway; display success state without activating yet (activation happens via verified webhook)
+          setCheckoutDetails({
+            paymentId: response.razorpay_payment_id,
+            orderId: response.razorpay_order_id,
+            signature: response.razorpay_signature,
+            planName: orderData.plan.name,
+            amount: orderData.amount,
+          });
+          setCheckoutStatus('success');
+        },
+        modal: {
+          ondismiss: function () {
+            setCheckoutStatus('failed');
+            setCheckoutError('Payment window was closed before completing checkout.');
+          },
+        },
+      };
+
+      const rzpInstance = new window.Razorpay(options);
+      rzpInstance.on('payment.failed', function (resp) {
+        setCheckoutStatus('failed');
+        setCheckoutError(resp.error?.description || 'Payment was declined or failed at gateway.');
+      });
+
+      rzpInstance.open();
+    } catch (err) {
+      setCheckoutStatus('failed');
+      setCheckoutError(err.message || 'Failed to initiate Razorpay checkout.');
+    }
   };
 
   return (
@@ -363,8 +438,113 @@ export default function OnlineJoiningPage() {
         </div>
       )}
 
-      {/* STEP 3: Clear payment_pending State */}
-      {step === 3 && currentMembership && (
+      {/* STEP 3: Razorpay Checkout & Pending/Success/Failure States */}
+      {step === 3 && currentMembership && checkoutStatus === 'success' && checkoutDetails && (
+        <div className="payment-success-card" role="status">
+          <div className="success-icon-circle">
+            <CheckCircle2 size={32} />
+          </div>
+
+          <div>
+            <span className="success-status-badge">
+              Gateway Captured · Signature Pending Verification
+            </span>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
+              Payment Captured at Razorpay
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: '0 auto' }}>
+              Your payment has been successfully recorded by Razorpay. Per security guidelines, membership access will automatically activate once signature and webhook verification confirm capture.
+            </p>
+          </div>
+
+          <div className="pending-details-box">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Payment Reference:</span>
+              <strong style={{ color: '#4ade80' }}>{checkoutDetails.paymentId}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Order ID:</span>
+              <span>{checkoutDetails.orderId}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Plan:</span>
+              <strong style={{ color: '#ffffff' }}>{checkoutDetails.planName}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Amount Captured:</span>
+              <strong style={{ color: '#0080ff' }}>
+                ₹{((checkoutDetails.amount || 0) / 100).toLocaleString('en-IN')}
+              </strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Activation Status:</span>
+              <span style={{ color: '#facc15', fontWeight: 600 }}>Awaiting Signature Capture</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleResetPlanSelection}
+            >
+              <span>Back to Plans</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && currentMembership && checkoutStatus === 'failed' && (
+        <div className="payment-failed-card" role="alert">
+          <div className="failed-icon-circle">
+            <XCircle size={32} />
+          </div>
+
+          <div>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: '#f87171',
+              borderRadius: '999px',
+              padding: '4px 12px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+            }}>
+              Checkout Notice
+            </span>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
+              Checkout Not Completed
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '500px', margin: '0 auto' }}>
+              {checkoutError || 'The Razorpay payment process was interrupted, declined, or closed.'}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleResetPlanSelection}
+            >
+              <RefreshCw size={16} />
+              <span>Choose Different Plan</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handlePayOnline}
+            >
+              <CreditCard size={16} />
+              <span>Retry Online Payment</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && currentMembership && checkoutStatus !== 'success' && checkoutStatus !== 'failed' && (
         <div className="payment-pending-card">
           <div className="pending-icon-circle">
             <Clock size={32} />
@@ -378,7 +558,7 @@ export default function OnlineJoiningPage() {
               Plan Selected — Awaiting Payment Verification
             </h2>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '500px', margin: '0 auto' }}>
-              Your membership selection has been recorded. To activate full facility access and unlock your gate check-in QR code, please complete fee payment at reception or via invoice.
+              Your membership selection has been reserved. Complete payment securely via Razorpay Checkout to finalize your enrollment.
             </p>
           </div>
 
@@ -408,6 +588,7 @@ export default function OnlineJoiningPage() {
               type="button"
               className="btn btn-secondary"
               onClick={handleResetPlanSelection}
+              disabled={checkoutStatus === 'opening'}
             >
               <RefreshCw size={16} />
               <span>Choose Different Plan</span>
@@ -415,10 +596,11 @@ export default function OnlineJoiningPage() {
             <button
               type="button"
               className="btn btn-primary"
-              onClick={() => alert('Online checkout gateway will be connected in Day 13 (Payments foundation). Please visit reception to complete payment.')}
+              onClick={handlePayOnline}
+              disabled={checkoutStatus === 'opening'}
             >
               <CreditCard size={16} />
-              <span>Pay Online via Razorpay</span>
+              <span>{checkoutStatus === 'opening' ? 'Opening Gateway…' : 'Pay Online via Razorpay'}</span>
             </button>
           </div>
         </div>
