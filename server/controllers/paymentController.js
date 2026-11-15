@@ -22,6 +22,17 @@ export const createPaymentController = (service = defaultService) => {
       }
     },
 
+    async verifyPayment(req, res, next) {
+      try {
+        const userId = req.user?.uid;
+        const result = await service.verifyRazorpayPayment(userId, req.body);
+
+        res.status(200).json(result);
+      } catch (err) {
+        next(err);
+      }
+    },
+
     async getPayment(req, res, next) {
       try {
         const user = req.user;

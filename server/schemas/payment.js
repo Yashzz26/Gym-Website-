@@ -18,3 +18,19 @@ export const createRazorpayOrderSchema = z.object({
     .optional(),
 });
 
+export const verifyRazorpayPaymentSchema = z.object({
+  razorpay_payment_id: z
+    .string({ required_error: 'Razorpay Payment ID is required' })
+    .trim()
+    .min(1, 'Razorpay Payment ID cannot be empty'),
+  razorpay_order_id: z
+    .string({ required_error: 'Razorpay Order ID is required' })
+    .trim()
+    .min(1, 'Razorpay Order ID cannot be empty'),
+  razorpay_signature: z
+    .string({ required_error: 'Razorpay Signature is required' })
+    .trim()
+    .min(1, 'Razorpay Signature cannot be empty'),
+});
+
+
