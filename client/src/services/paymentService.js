@@ -47,6 +47,56 @@ export async function createRazorpayOrder(data, token) {
 }
 
 /**
+ * Standard checkout endpoint: Create order with amount (in paise).
+ * POST /api/create-order
+ *
+ * @param {Object} data - { amount, currency, receipt, notes }
+ * @returns {Promise<Object>} { order_id, amount, currency, key_id }
+ */
+export async function createOrder(data) {
+  const response = await fetchWithAuth(`${API_BASE}/create-order`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return response;
+}
+
+/**
+ * Standard checkout endpoint: Verify HMAC-SHA256 signature.
+ * POST /api/verify-payment
+ *
+ * @param {Object} data - { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+ * @returns {Promise<Object>} { success: true, message, order_id, payment_id }
+ */
+export async function verifyPayment(data) {
+  const response = await fetchWithAuth(`${API_BASE}/verify-payment`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return response;
+}
+
+/**
+ * Verify Razorpay payment signature and activate membership.
+ * POST /api/payments/razorpay/verify
+ *
+ * @param {Object} data - { razorpay_payment_id, razorpay_order_id, razorpay_signature }
+ * @param {string|null} token - Firebase ID token
+ * @returns {Promise<Object>} Verification response
+ */
+export async function verifyRazorpayPayment(data, token) {
+  const response = await fetchWithAuth(
+    `${API_BASE}/payments/razorpay/verify`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    token
+  );
+  return response;
+}
+
+/**
  * Retrieve a payment transaction by ID.
  */
 export async function getPayment(paymentId, token) {

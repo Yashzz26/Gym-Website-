@@ -14,7 +14,11 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { listPlans } from '../../services/planService';
 import { selectPlan, getMyMembership } from '../../services/memberService';
-import { createRazorpayOrder, loadRazorpayScript } from '../../services/paymentService';
+import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  loadRazorpayScript,
+} from '../../services/paymentService';
 import './OnlineJoiningPage.css';
 
 export default function OnlineJoiningPage() {
@@ -170,16 +174,31 @@ export default function OnlineJoiningPage() {
         theme: {
           color: '#0066ff',
         },
-        handler: function (response) {
-          // Captured at gateway; display success state without activating yet (activation happens via verified webhook)
-          setCheckoutDetails({
-            paymentId: response.razorpay_payment_id,
-            orderId: response.razorpay_order_id,
-            signature: response.razorpay_signature,
-            planName: orderData.plan.name,
-            amount: orderData.amount,
-          });
-          setCheckoutStatus('success');
+        handler: async function (response) {
+          try {
+            setCheckoutStatus('verifying');
+            const verifyRes = await verifyRazorpayPayment(
+              {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+              token
+            );
+
+            setCheckoutDetails({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              planName: orderData.plan.name,
+              amount: orderData.amount,
+              membership: verifyRes?.membership,
+            });
+            setCheckoutStatus('success');
+          } catch (verifyErr) {
+            setCheckoutStatus('failed');
+            setCheckoutError(verifyErr.message || 'Payment signature verification failed.');
+          }
         },
         modal: {
           ondismiss: function () {
@@ -597,10 +616,16 @@ export default function OnlineJoiningPage() {
               type="button"
               className="btn btn-primary"
               onClick={handlePayOnline}
-              disabled={checkoutStatus === 'opening'}
+              disabled={checkoutStatus === 'opening' || checkoutStatus === 'verifying'}
             >
               <CreditCard size={16} />
-              <span>{checkoutStatus === 'opening' ? 'Opening Gateway…' : 'Pay Online via Razorpay'}</span>
+              <span>
+                {checkoutStatus === 'opening'
+                  ? 'Opening Gateway…'
+                  : checkoutStatus === 'verifying'
+                    ? 'Verifying Signature…'
+                    : 'Pay Online via Razorpay'}
+              </span>
             </button>
           </div>
         </div>
