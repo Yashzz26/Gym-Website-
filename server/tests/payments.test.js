@@ -41,6 +41,16 @@ function createMockFirestore() {
         approvalStatus: 'active',
       },
     ],
+    [
+      'user-member-3',
+      {
+        uid: 'user-member-3',
+        email: 'member3@gym.com',
+        displayName: 'Member Three',
+        role: 'member',
+        approvalStatus: 'active',
+      },
+    ],
   ]);
 
   const plansStore = new Map([
@@ -68,6 +78,7 @@ function createMockFirestore() {
 
   const membershipsStore = new Map();
   const paymentsStore = new Map();
+  const webhookEventsStore = new Map();
 
   return {
     usersStore,
@@ -212,6 +223,27 @@ function createMockFirestore() {
         };
       }
 
+      if (name === 'webhookEvents') {
+        return {
+          doc(id) {
+            return {
+              id,
+              async get() {
+                const exists = webhookEventsStore.has(id);
+                return {
+                  id,
+                  exists,
+                  data: () => (exists ? { ...webhookEventsStore.get(id) } : undefined),
+                };
+              },
+              async set(data) {
+                webhookEventsStore.set(id, { id, ...data });
+              },
+            };
+          },
+        };
+      }
+
       throw new Error(`Unknown collection ${name}`);
     },
   };
@@ -221,6 +253,7 @@ function createMockRazorpay() {
   return {
     keyId: 'rzp_test_mock_key',
     keySecret: 'test_mock_secret_key',
+    webhookSecret: 'test_webhook_secret_key',
     isConfigured: true,
     orders: {
       async create(params) {
@@ -260,7 +293,13 @@ function createTestServer() {
   };
 
   const app = express();
-  app.use(express.json());
+  app.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        req.rawBody = buf;
+      },
+    })
+  );
 
   const router = createPaymentsRouter({
     controller,
@@ -617,6 +656,166 @@ describe('Day 13 Task 25: Razorpay Orders API', () => {
     assert.equal(res.body.status, 'success');
     assert.equal(res.body.idempotent, true);
     assert.match(res.body.message, /already been verified/i);
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /* Day 14 Task 28: Razorpay Webhook Handling Tests                           */
+  /* -------------------------------------------------------------------------- */
+
+  let webhookOrderId;
+
+  test('POST /api/payments/razorpay/order - creates pending order for webhook tests', async () => {
+    testEnv.setAuth({ uid: 'user-member-3', email: 'member3@gym.com' });
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/order',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      planId: 'plan-3-months',
+    });
+
+    assert.equal(res.status, 201);
+    webhookOrderId = res.body.data.orderId;
+    assert.ok(webhookOrderId);
+  });
+
+  test('POST /api/payments/razorpay/webhook - rejects missing signature with 400', async () => {
+    const payload = JSON.stringify({
+      id: 'event_test_1',
+      event: 'payment.captured',
+    });
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/webhook',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, payload);
+
+    assert.equal(res.status, 400);
+    assert.match(res.body.message, /missing x-razorpay-signature/i);
+  });
+
+  test('POST /api/payments/razorpay/webhook - rejects invalid signature with 400', async () => {
+    const payload = JSON.stringify({
+      id: 'event_test_2',
+      event: 'payment.captured',
+    });
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/webhook',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-razorpay-signature': 'invalid_forged_webhook_signature_00000000000000000000',
+      },
+    }, payload);
+
+    assert.equal(res.status, 400);
+    assert.match(res.body.message, /invalid razorpay webhook signature/i);
+  });
+
+  test('POST /api/payments/razorpay/webhook - processes verified payment.captured event and activates membership', async () => {
+    const eventPayload = {
+      id: 'event_captured_999',
+      event: 'payment.captured',
+      payload: {
+        payment: {
+          entity: {
+            id: 'pay_hook_captured_111',
+            order_id: webhookOrderId,
+            amount: 399900,
+            currency: 'INR',
+            status: 'captured',
+          },
+        },
+      },
+    };
+
+    const rawPayload = JSON.stringify(eventPayload);
+    const webhookSecret = testEnv.mockRazorpay.webhookSecret;
+    const validSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(rawPayload)
+      .digest('hex');
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/webhook',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-razorpay-signature': validSignature,
+      },
+    }, rawPayload);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.status, 'success');
+    assert.equal(res.body.idempotent, false);
+
+    // Verify payment in store is now captured
+    let foundPayment = null;
+    for (const p of testEnv.mockDb.paymentsStore.values()) {
+      if (p.razorpayOrderId === webhookOrderId) {
+        foundPayment = p;
+        break;
+      }
+    }
+    assert.ok(foundPayment);
+    assert.equal(foundPayment.status, 'captured');
+    assert.equal(foundPayment.razorpayPaymentId, 'pay_hook_captured_111');
+    assert.ok(foundPayment.membershipId);
+
+    // Verify user profile membership status is active
+    const userDoc = testEnv.mockDb.usersStore.get('user-member-3');
+    assert.equal(userDoc.membershipStatus, 'active');
+  });
+
+  test('POST /api/payments/razorpay/webhook - deduplicates event and responds with 200 idempotent when called again', async () => {
+    const eventPayload = {
+      id: 'event_captured_999',
+      event: 'payment.captured',
+      payload: {
+        payment: {
+          entity: {
+            id: 'pay_hook_captured_111',
+            order_id: webhookOrderId,
+            amount: 399900,
+            currency: 'INR',
+            status: 'captured',
+          },
+        },
+      },
+    };
+
+    const rawPayload = JSON.stringify(eventPayload);
+    const webhookSecret = testEnv.mockRazorpay.webhookSecret;
+    const validSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(rawPayload)
+      .digest('hex');
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/webhook',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-razorpay-signature': validSignature,
+      },
+    }, rawPayload);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.status, 'success');
+    assert.equal(res.body.idempotent, true);
+    assert.match(res.body.message, /already processed/i);
   });
 });
 

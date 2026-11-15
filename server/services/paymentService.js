@@ -39,6 +39,11 @@ export const createPaymentService = (
     return customDb.collection('payments');
   };
 
+  const getWebhookEventsCollection = () => {
+    if (!customDb) throw new Error('[PaymentService] Firestore DB is not initialized');
+    return customDb.collection('webhookEvents');
+  };
+
   return {
     /**
      * Create an authenticated Razorpay order for membership purchase or renewal.
@@ -332,6 +337,164 @@ export const createPaymentService = (
       }
 
       return { paymentId: doc.id, ...doc.data() };
+    },
+
+    /**
+     * Process verified Razorpay webhook event with raw-body signature verification,
+     * event deduplication, and safe payment & membership activation.
+     *
+     * @param {Buffer|string} rawBody - Raw unparsed request body
+     * @param {string} signature - Header 'x-razorpay-signature'
+     * @param {Object} eventPayload - Parsed webhook payload JSON
+     * @returns {Promise<Object>}
+     */
+    async handleRazorpayWebhook(rawBody, signature, eventPayload) {
+      // 1. Verify webhook signature against raw request body
+      const webhookSecret =
+        customRazorpay.webhookSecret ||
+        process.env.RAZORPAY_WEBHOOK_SECRET ||
+        'rzp_webhook_secret_test';
+
+      if (!signature) {
+        throw new BadRequestError('Missing x-razorpay-signature header');
+      }
+
+      if (!rawBody) {
+        throw new BadRequestError('Raw request body missing for webhook signature verification');
+      }
+
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(rawBody)
+        .digest('hex');
+
+      const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+      const actualBuf = Buffer.from(signature, 'utf8');
+
+      const isValid =
+        expectedBuf.length === actualBuf.length &&
+        crypto.timingSafeEqual(expectedBuf, actualBuf);
+
+      if (!isValid) {
+        throw new BadRequestError('Invalid Razorpay webhook signature');
+      }
+
+      // 2. Event deduplication: check if event.id was already processed
+      const eventId = eventPayload?.id;
+      if (!eventId) {
+        throw new BadRequestError('Invalid webhook payload: missing event.id');
+      }
+
+      const existingEventDoc = await getWebhookEventsCollection().doc(eventId).get();
+      if (existingEventDoc.exists) {
+        return {
+          status: 'success',
+          idempotent: true,
+          message: `Webhook event '${eventId}' already processed`,
+        };
+      }
+
+      const eventName = eventPayload.event;
+      const paymentEntity = eventPayload.payload?.payment?.entity;
+      const nowIso = new Date().toISOString();
+
+      // 3. Process captured payment events safely
+      if (eventName === 'payment.captured' && paymentEntity) {
+        const orderId = paymentEntity.order_id;
+        const razorpayPaymentId = paymentEntity.id;
+
+        const querySnap = await getPaymentsCollection()
+          .where('razorpayOrderId', '==', orderId)
+          .get();
+
+        let paymentDoc = null;
+        querySnap.forEach((doc) => {
+          paymentDoc = { id: doc.id, ...doc.data() };
+        });
+
+        if (paymentDoc && paymentDoc.status !== 'captured') {
+          const userId = paymentDoc.userId;
+          const planDoc = await getPlansCollection().doc(paymentDoc.planId).get();
+
+          if (planDoc.exists) {
+            const plan = planDoc.data();
+            const durationDays = plan.durationDays || 30;
+
+            let startDate = nowIso;
+            if (paymentDoc.isRenewal && paymentDoc.existingMembershipId) {
+              const prevDoc = await getMembershipsCollection()
+                .doc(paymentDoc.existingMembershipId)
+                .get();
+              if (prevDoc.exists) {
+                const prevData = prevDoc.data();
+                const prevEndDate = new Date(prevData.endDate);
+                if (prevData.status === 'active' && prevEndDate > new Date()) {
+                  startDate = prevEndDate.toISOString();
+                }
+                await getMembershipsCollection().doc(paymentDoc.existingMembershipId).update({
+                  renewedAt: nowIso,
+                  updatedAt: nowIso,
+                });
+              }
+            }
+
+            const endDate = new Date(
+              new Date(startDate).getTime() + durationDays * 24 * 60 * 60 * 1000
+            ).toISOString();
+
+            const newMembershipDoc = await getMembershipsCollection().add({
+              userId,
+              planId: paymentDoc.planId,
+              planName: paymentDoc.planName,
+              durationDays,
+              priceInPaise: paymentDoc.amountInPaise,
+              startDate,
+              endDate,
+              status: 'active',
+              paymentStatus: 'paid',
+              paymentId: paymentDoc.id,
+              paymentMethod: 'razorpay',
+              renewedFrom: paymentDoc.isRenewal ? paymentDoc.existingMembershipId : null,
+              createdBy: userId,
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            });
+
+            await getPaymentsCollection().doc(paymentDoc.id).update({
+              status: 'captured',
+              razorpayPaymentId,
+              membershipId: newMembershipDoc.id,
+              verifiedAt: nowIso,
+              updatedAt: nowIso,
+            });
+
+            await getUsersCollection().doc(userId).set(
+              {
+                membershipStatus: 'active',
+                activeMembershipId: newMembershipDoc.id,
+                updatedAt: nowIso,
+              },
+              { merge: true }
+            );
+          }
+        }
+      }
+
+      // 4. Record event for deduplication
+      await getWebhookEventsCollection().doc(eventId).set({
+        eventId,
+        event: eventName,
+        orderId: paymentEntity?.order_id || null,
+        paymentId: paymentEntity?.id || null,
+        processedAt: nowIso,
+        status: 'processed',
+      });
+
+      return {
+        status: 'success',
+        idempotent: false,
+        message: `Webhook event '${eventName}' processed successfully`,
+      };
     },
   };
 };

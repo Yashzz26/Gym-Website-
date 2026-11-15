@@ -30,6 +30,12 @@ export const createPaymentsRouter = ({
     controller.verifyPayment
   );
 
+  // Razorpay webhook endpoint (signature verified against raw request body)
+  router.post(
+    '/razorpay/webhook',
+    controller.handleWebhook
+  );
+
   // Retrieve payment details
   router.get(
     '/:id',
