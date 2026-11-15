@@ -496,6 +496,112 @@ export const createPaymentService = (
         message: `Webhook event '${eventName}' processed successfully`,
       };
     },
+
+    /**
+     * Standard Razorpay Order creation by amount (in paise).
+     * Used by standard checkout flow: POST /api/create-order
+     *
+     * @param {Object} data - { amount, currency, receipt, notes }
+     * @returns {Promise<Object>} { order_id, amount, currency, key_id }
+     */
+    async createDirectOrder(data) {
+      const { amount, currency = 'INR', receipt, notes = {} } = data;
+
+      const numAmount = Number(amount);
+      if (!numAmount || isNaN(numAmount) || numAmount < 100) {
+        throw new BadRequestError('Amount must be at least 100 paise');
+      }
+
+      const receiptId =
+        receipt || `rcpt_${Date.now().toString().slice(-8)}_${Math.random().toString(36).slice(2, 6)}`;
+      const orderParams = {
+        amount: Math.round(numAmount),
+        currency: (currency || 'INR').toUpperCase(),
+        receipt: receiptId,
+        notes: notes || {},
+      };
+
+      const order = await customRazorpay.orders.create(orderParams);
+
+      return {
+        order_id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        key_id: customRazorpay.keyId || process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+      };
+    },
+
+    /**
+     * Standard HMAC-SHA256 signature verification.
+     * Used by standard checkout flow: POST /api/verify-payment
+     *
+     * @param {Object} data - { order_id, payment_id, signature } or { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+     * @returns {Object} { success: true, message, order_id, payment_id }
+     */
+    async verifyPaymentSignature(data) {
+      const orderId = data.order_id || data.razorpay_order_id;
+      const paymentId = data.payment_id || data.razorpay_payment_id;
+      const signature = data.signature || data.razorpay_signature;
+
+      if (!orderId || !paymentId || !signature) {
+        throw new BadRequestError('Missing order_id, payment_id, or signature');
+      }
+
+      const secret =
+        customRazorpay.keySecret ||
+        process.env.RAZORPAY_KEY_SECRET ||
+        'rzp_test_mock_secret';
+
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(`${orderId}|${paymentId}`)
+        .digest('hex');
+
+      const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+      const actualBuffer = Buffer.from(signature, 'utf8');
+
+      const isSignatureValid =
+        expectedBuffer.length === actualBuffer.length &&
+        crypto.timingSafeEqual(expectedBuffer, actualBuffer);
+
+      if (!isSignatureValid) {
+        throw new BadRequestError('Invalid payment signature');
+      }
+
+      // If matching payment record exists in Firestore, also update its status
+      try {
+        if (customDb) {
+          const querySnap = await getPaymentsCollection()
+            .where('razorpayOrderId', '==', orderId)
+            .get();
+
+          let paymentDoc = null;
+          querySnap.forEach((doc) => {
+            paymentDoc = { id: doc.id, ...doc.data() };
+          });
+
+          if (paymentDoc && paymentDoc.status !== 'captured') {
+            const nowIso = new Date().toISOString();
+            await getPaymentsCollection().doc(paymentDoc.id).update({
+              status: 'captured',
+              razorpayPaymentId: paymentId,
+              verifiedAt: nowIso,
+              updatedAt: nowIso,
+            });
+          }
+        }
+      } catch (dbErr) {
+        // Log error but don't fail signature verification if DB is not attached
+        console.warn('[PaymentService] Error updating payment record on verify:', dbErr.message);
+      }
+
+      return {
+        success: true,
+        message: 'Payment verified successfully',
+        order_id: orderId,
+        payment_id: paymentId,
+      };
+    },
   };
 };
 

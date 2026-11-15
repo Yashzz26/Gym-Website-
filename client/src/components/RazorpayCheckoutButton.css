@@ -1,0 +1,53 @@
+/* RazorpayCheckoutButton.css */
+
+.razorpay-checkout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+  border: 1px solid rgba(0, 102, 255, 0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
+  text-decoration: none;
+  user-select: none;
+}
+
+.razorpay-checkout-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1a75ff 0%, #0066ff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 102, 255, 0.35);
+}
+
+.razorpay-checkout-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+}
+
+.razorpay-checkout-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.razorpay-checkout-button .rzp-spinner {
+  animation: rzp-spin 1s linear infinite;
+}
+
+@keyframes rzp-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

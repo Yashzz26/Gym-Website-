@@ -14,6 +14,10 @@ export const createPaymentsRouter = ({
 } = {}) => {
   const router = Router();
 
+  // Standard Checkout create-order and verify-payment endpoints
+  router.post('/create-order', controller.createDirectOrder);
+  router.post('/verify-payment', controller.verifyPaymentSignature);
+
   // Create Razorpay authenticated order
   router.post(
     '/razorpay/order',

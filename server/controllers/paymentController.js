@@ -33,6 +33,24 @@ export const createPaymentController = (service = defaultService) => {
       }
     },
 
+    async createDirectOrder(req, res, next) {
+      try {
+        const result = await service.createDirectOrder(req.body);
+        res.status(200).json(result);
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    async verifyPaymentSignature(req, res, next) {
+      try {
+        const result = await service.verifyPaymentSignature(req.body);
+        res.status(200).json(result);
+      } catch (err) {
+        next(err);
+      }
+    },
+
     async handleWebhook(req, res, next) {
       try {
         const rawBody = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
