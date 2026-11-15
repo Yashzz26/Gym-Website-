@@ -33,6 +33,18 @@ export const createPaymentController = (service = defaultService) => {
       }
     },
 
+    async handleWebhook(req, res, next) {
+      try {
+        const rawBody = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+        const signature = req.headers['x-razorpay-signature'];
+        const result = await service.handleRazorpayWebhook(rawBody, signature, req.body);
+
+        res.status(200).json(result);
+      } catch (err) {
+        next(err);
+      }
+    },
+
     async getPayment(req, res, next) {
       try {
         const user = req.user;

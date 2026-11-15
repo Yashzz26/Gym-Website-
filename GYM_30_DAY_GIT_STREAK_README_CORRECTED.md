@@ -378,11 +378,11 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 14 --- Sunday, 15 November 2026 --- Payment verification
 
--   [ ] **Task 27: Implement payment signature verification** \[M\]
+-   [x] **Task 27: Implement payment signature verification** [M]
     -   Verify Razorpay payment signatures on Express and persist
         payment status with idempotent handling.
     -   Commit: `feat(payments): verify Razorpay signatures`
--   [ ] **Task 28: Implement Razorpay webhook handling** \[L\]
+-   [x] **Task 28: Implement Razorpay webhook handling** [L]
     -   Add raw-body webhook signature verification, event deduplication
         and safe payment/membership activation after confirmed capture.
         Verify the signature against the raw request body before JSON
@@ -390,7 +390,7 @@ counts contribution days, not the number of commits as separate squares.
         Razorpay `event.id`, store processed event IDs, and activate
         membership only after a verified captured-payment event.
     -   Commit: `feat(payments): process verified Razorpay webhooks`
--   [ ] Both planned commits pushed and visible on GitHub (Day 14).
+-   [x] Both planned commits pushed and visible on GitHub (Day 14).
 
 ### Day 15 --- Monday, 16 November 2026 --- Reception fees
 
