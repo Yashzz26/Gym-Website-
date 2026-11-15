@@ -27,6 +27,7 @@ export function createRazorpayClient({
     return {
       isConfigured: false,
       keyId: keyId || 'rzp_test_placeholder',
+      keySecret: keySecret || 'rzp_test_mock_secret',
       orders: {
         async create(params) {
           return {
@@ -54,8 +55,17 @@ export function createRazorpayClient({
 
   instance.isConfigured = true;
   instance.keyId = keyId;
+  instance.keySecret = keySecret;
 
   return instance;
+}
+
+export function getRazorpayKeySecret() {
+  return process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret';
+}
+
+export function getRazorpayWebhookSecret() {
+  return process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_webhook_secret_test';
 }
 
 export const razorpayClient = createRazorpayClient();

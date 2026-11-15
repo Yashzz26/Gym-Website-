@@ -10,6 +10,7 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import express from 'express';
+import crypto from 'node:crypto';
 
 import { createPaymentService } from '../services/paymentService.js';
 import { createPaymentController } from '../controllers/paymentController.js';
@@ -87,6 +88,13 @@ function createMockFirestore() {
                   data: () => (exists ? { ...usersStore.get(id) } : undefined),
                 };
               },
+              async set(data, options = {}) {
+                if (options.merge && usersStore.has(id)) {
+                  usersStore.set(id, { ...usersStore.get(id), ...data });
+                } else {
+                  usersStore.set(id, { ...data });
+                }
+              },
             };
           },
         };
@@ -123,7 +131,17 @@ function createMockFirestore() {
                   data: () => (exists ? { ...membershipsStore.get(id) } : undefined),
                 };
               },
+              async update(data) {
+                if (membershipsStore.has(id)) {
+                  membershipsStore.set(id, { ...membershipsStore.get(id), ...data });
+                }
+              },
             };
+          },
+          async add(data) {
+            const id = `membership-${membershipsStore.size + 1}`;
+            membershipsStore.set(id, { id, ...data });
+            return { id };
           },
           where(field, op, val) {
             return {
@@ -160,6 +178,30 @@ function createMockFirestore() {
                   data: () => (exists ? { ...paymentsStore.get(id) } : undefined),
                 };
               },
+              async update(data) {
+                if (paymentsStore.has(id)) {
+                  paymentsStore.set(id, { ...paymentsStore.get(id), ...data });
+                }
+              },
+            };
+          },
+          where(field, op, val) {
+            return {
+              async get() {
+                const matches = [];
+                for (const [id, item] of paymentsStore.entries()) {
+                  if (op === '==' && item[field] === val) {
+                    matches.push({ id, data: () => ({ ...item }) });
+                  }
+                }
+                return {
+                  forEach(callback) {
+                    matches.forEach(callback);
+                  },
+                  docs: matches,
+                  size: matches.length,
+                };
+              },
             };
           },
           async add(data) {
@@ -178,6 +220,7 @@ function createMockFirestore() {
 function createMockRazorpay() {
   return {
     keyId: 'rzp_test_mock_key',
+    keySecret: 'test_mock_secret_key',
     isConfigured: true,
     orders: {
       async create(params) {
@@ -426,6 +469,154 @@ describe('Day 13 Task 25: Razorpay Orders API', () => {
     });
 
     assert.equal(res.status, 403);
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /* Day 14 Task 27: Payment Signature Verification Tests                      */
+  /* -------------------------------------------------------------------------- */
+
+  let testOrderId;
+  let testPaymentDocId;
+
+  test('POST /api/payments/razorpay/order - creates order ready for signature verification', async () => {
+    testEnv.setAuth({ uid: 'user-member-2', email: 'member2@gym.com' });
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/order',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      planId: 'plan-3-months',
+    });
+
+    assert.equal(res.status, 201);
+    testOrderId = res.body.data.orderId;
+    testPaymentDocId = res.body.data.paymentId;
+    assert.ok(testOrderId);
+  });
+
+  test('POST /api/payments/razorpay/verify - rejects unauthenticated requests with 401', async () => {
+    testEnv.setAuth(null);
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/verify',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      razorpay_order_id: testOrderId,
+      razorpay_payment_id: 'pay_test_123',
+      razorpay_signature: 'fake_sig',
+    });
+
+    assert.equal(res.status, 401);
+  });
+
+  test('POST /api/payments/razorpay/verify - rejects invalid signature with 400', async () => {
+    testEnv.setAuth({ uid: 'user-member-2', email: 'member2@gym.com' });
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/verify',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      razorpay_order_id: testOrderId,
+      razorpay_payment_id: 'pay_test_123',
+      razorpay_signature: 'invalid_forged_signature_0000000000000000000000000000000000000000',
+    });
+
+    assert.equal(res.status, 400);
+    assert.match(res.body.message, /invalid razorpay payment signature/i);
+  });
+
+  test('POST /api/payments/razorpay/verify - rejects non-existent order with 404', async () => {
+    const fakeOrderId = 'order_non_existent_99999';
+    const fakePaymentId = 'pay_fake_99999';
+    const secret = testEnv.mockRazorpay.keySecret;
+    const validSigForNonExistentOrder = crypto
+      .createHmac('sha256', secret)
+      .update(`${fakeOrderId}|${fakePaymentId}`)
+      .digest('hex');
+
+    testEnv.setAuth({ uid: 'user-member-2', email: 'member2@gym.com' });
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/verify',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      razorpay_order_id: fakeOrderId,
+      razorpay_payment_id: fakePaymentId,
+      razorpay_signature: validSigForNonExistentOrder,
+    });
+
+    assert.equal(res.status, 404);
+  });
+
+  test('POST /api/payments/razorpay/verify - verifies valid signature, captures payment & activates membership', async () => {
+    const paymentId = 'pay_real_mock_456';
+    const secret = testEnv.mockRazorpay.keySecret;
+    const validSignature = crypto
+      .createHmac('sha256', secret)
+      .update(`${testOrderId}|${paymentId}`)
+      .digest('hex');
+
+    testEnv.setAuth({ uid: 'user-member-2', email: 'member2@gym.com' });
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/verify',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      razorpay_order_id: testOrderId,
+      razorpay_payment_id: paymentId,
+      razorpay_signature: validSignature,
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.status, 'success');
+    assert.equal(res.body.idempotent, false);
+    assert.equal(res.body.payment.status, 'captured');
+    assert.equal(res.body.payment.razorpayPaymentId, paymentId);
+    assert.ok(res.body.membership.membershipId);
+    assert.equal(res.body.membership.status, 'active');
+    assert.equal(res.body.membership.paymentStatus, 'paid');
+
+    // Check user profile was updated to active
+    const userDoc = testEnv.mockDb.usersStore.get('user-member-2');
+    assert.equal(userDoc.membershipStatus, 'active');
+    assert.equal(userDoc.activeMembershipId, res.body.membership.membershipId);
+  });
+
+  test('POST /api/payments/razorpay/verify - returns idempotent success when called a second time', async () => {
+    const paymentId = 'pay_real_mock_456';
+    const secret = testEnv.mockRazorpay.keySecret;
+    const validSignature = crypto
+      .createHmac('sha256', secret)
+      .update(`${testOrderId}|${paymentId}`)
+      .digest('hex');
+
+    testEnv.setAuth({ uid: 'user-member-2', email: 'member2@gym.com' });
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/payments/razorpay/verify',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, {
+      razorpay_order_id: testOrderId,
+      razorpay_payment_id: paymentId,
+      razorpay_signature: validSignature,
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.status, 'success');
+    assert.equal(res.body.idempotent, true);
+    assert.match(res.body.message, /already been verified/i);
   });
 });
 

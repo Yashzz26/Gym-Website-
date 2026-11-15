@@ -5,11 +5,13 @@
  * requires explicit renewal policy, and persists pending payment records.
  */
 
+import crypto from 'node:crypto';
 import { db as defaultDb } from '../config/firebase.js';
 import { razorpayClient as defaultRazorpay } from '../config/razorpay.js';
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   NotFoundError,
 } from '../utils/errors.js';
 
@@ -150,6 +152,171 @@ export const createPaymentService = (
           durationDays: plan.durationDays,
         },
         isRenewal: Boolean(isRenewal),
+      };
+    },
+
+    /**
+     * Verify Razorpay payment signature and activate membership idempotently.
+     *
+     * @param {string} userId - Authenticated user UID
+     * @param {Object} data - { razorpay_payment_id, razorpay_order_id, razorpay_signature }
+     * @returns {Promise<Object>} Verified payment and activated membership details
+     */
+    async verifyRazorpayPayment(userId, data) {
+      const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = data;
+
+      // 1. Verify cryptographic signature using constant-time comparison
+      const secret =
+        customRazorpay.keySecret ||
+        process.env.RAZORPAY_KEY_SECRET ||
+        'rzp_test_mock_secret';
+
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+
+      const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+      const actualBuffer = Buffer.from(razorpay_signature, 'utf8');
+
+      const isSignatureValid =
+        expectedBuffer.length === actualBuffer.length &&
+        crypto.timingSafeEqual(expectedBuffer, actualBuffer);
+
+      if (!isSignatureValid) {
+        throw new BadRequestError('Invalid Razorpay payment signature');
+      }
+
+      // 2. Fetch corresponding payment record by razorpayOrderId
+      const querySnap = await getPaymentsCollection()
+        .where('razorpayOrderId', '==', razorpay_order_id)
+        .get();
+
+      let paymentDoc = null;
+      querySnap.forEach((doc) => {
+        paymentDoc = { id: doc.id, ...doc.data() };
+      });
+
+      if (!paymentDoc) {
+        throw new NotFoundError(
+          `Payment record not found for Razorpay order '${razorpay_order_id}'`
+        );
+      }
+
+      // Security check: ensure payment belongs to authenticated user
+      if (paymentDoc.userId !== userId) {
+        throw new ForbiddenError('You can only verify your own payment records');
+      }
+
+      // 3. Idempotency Check: if already captured, return existing record safely
+      if (paymentDoc.status === 'captured') {
+        let existingMembership = null;
+        if (paymentDoc.membershipId) {
+          const mDoc = await getMembershipsCollection()
+            .doc(paymentDoc.membershipId)
+            .get();
+          if (mDoc.exists) {
+            existingMembership = { membershipId: mDoc.id, ...mDoc.data() };
+          }
+        }
+
+        return {
+          status: 'success',
+          idempotent: true,
+          message: 'Payment has already been verified and processed',
+          payment: paymentDoc,
+          membership: existingMembership,
+        };
+      }
+
+      // 4. Activate membership and mark payment captured
+      const nowIso = new Date().toISOString();
+      const planDoc = await getPlansCollection().doc(paymentDoc.planId).get();
+      if (!planDoc.exists) {
+        throw new NotFoundError(`Plan '${paymentDoc.planId}' not found`);
+      }
+      const plan = planDoc.data();
+      const durationDays = plan.durationDays || 30;
+
+      // Calculate start and end dates
+      let startDate = nowIso;
+      if (paymentDoc.isRenewal && paymentDoc.existingMembershipId) {
+        const prevDoc = await getMembershipsCollection()
+          .doc(paymentDoc.existingMembershipId)
+          .get();
+        if (prevDoc.exists) {
+          const prevData = prevDoc.data();
+          const prevEndDate = new Date(prevData.endDate);
+          if (prevData.status === 'active' && prevEndDate > new Date()) {
+            startDate = prevEndDate.toISOString();
+          }
+          await getMembershipsCollection().doc(paymentDoc.existingMembershipId).update({
+            renewedAt: nowIso,
+            updatedAt: nowIso,
+          });
+        }
+      }
+
+      const endDate = new Date(
+        new Date(startDate).getTime() + durationDays * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const newMembershipData = {
+        userId,
+        planId: paymentDoc.planId,
+        planName: paymentDoc.planName,
+        durationDays,
+        priceInPaise: paymentDoc.amountInPaise,
+        startDate,
+        endDate,
+        status: 'active',
+        paymentStatus: 'paid',
+        paymentId: paymentDoc.id,
+        paymentMethod: 'razorpay',
+        renewedFrom: paymentDoc.isRenewal ? paymentDoc.existingMembershipId : null,
+        createdBy: userId,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+
+      const newMembershipDoc = await getMembershipsCollection().add(newMembershipData);
+      const newMembershipId = newMembershipDoc.id;
+
+      // Update previous membership link if renewal
+      if (paymentDoc.isRenewal && paymentDoc.existingMembershipId) {
+        await getMembershipsCollection().doc(paymentDoc.existingMembershipId).update({
+          nextMembershipId: newMembershipId,
+        });
+      }
+
+      // Update payment record to captured
+      const updatedPaymentData = {
+        status: 'captured',
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        membershipId: newMembershipId,
+        verifiedAt: nowIso,
+        updatedAt: nowIso,
+      };
+
+      await getPaymentsCollection().doc(paymentDoc.id).update(updatedPaymentData);
+
+      // Update user document
+      await getUsersCollection().doc(userId).set(
+        {
+          membershipStatus: 'active',
+          activeMembershipId: newMembershipId,
+          updatedAt: nowIso,
+        },
+        { merge: true }
+      );
+
+      return {
+        status: 'success',
+        idempotent: false,
+        message: 'Payment verified and membership activated successfully',
+        payment: { ...paymentDoc, ...updatedPaymentData },
+        membership: { membershipId: newMembershipId, ...newMembershipData },
       };
     },
 
