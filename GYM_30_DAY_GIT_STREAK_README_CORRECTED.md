@@ -394,7 +394,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 15 --- Monday, 16 November 2026 --- Reception fees
 
--   [ ] **Task 29: Add cash and manual UPI payment APIs** \[M\]
+-   [x] **Task 29: Add cash and manual UPI payment APIs** [M]
     -   Allow authorized reception users to record cash/manual UPI
         payments with amount, member, plan, staff ID and audit data.
         Write an `auditLogs` record for each manual payment with
@@ -402,12 +402,12 @@ counts contribution days, not the number of commits as separate squares.
         `timestamp` and `requestId`; define the collection shape in
         `docs/DATABASE_SCHEMA.md`.
     -   Commit: `feat(payments): record cash and manual UPI`
--   [ ] **Task 30: Build fees entry and receipt screen** \[M\]
+-   [x] **Task 30: Build fees entry and receipt screen** [M]
     -   Build member search, plan selection, payment method, receipt
         details and payment history. Clearly distinguish manual UPI from
         Razorpay.
     -   Commit: `feat(reception): build fees entry and receipts`
--   [ ] Both planned commits pushed and visible on GitHub (Day 15).
+-   [x] Both planned commits pushed and visible on GitHub (Day 15).
 
 ### Day 16 --- Tuesday, 17 November 2026 --- QR attendance foundation
 
