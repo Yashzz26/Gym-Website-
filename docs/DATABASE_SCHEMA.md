@@ -94,6 +94,40 @@ stateDiagram-v2
 | `createdAt` | string (ISO UTC) | Creation timestamp |
 | `updatedAt` | string (ISO UTC) | Modification timestamp |
 
+### `payments` collection (`payments/{paymentId}`)
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `userId` | string | Member UID |
+| `planId` | string | Reference to `membershipPlans/{planId}` |
+| `planName` | string | Plan title at time of purchase |
+| `amountPaise` | number | Amount paid in integer paise (₹3,999 = `399900`) |
+| `currency` | string | Always `'INR'` |
+| `method` | string | `'cash'` \| `'upi'` \| `'card'` \| `'netbanking'` |
+| `gateway` | string | `'manual'` (reception cash/UPI) \| `'razorpay'` |
+| `status` | string | `'created'` \| `'authorized'` \| `'captured'` \| `'failed'` |
+| `isRenewal` | boolean | Whether this payment renews/extends an existing membership |
+| `existingMembershipId` | string \| null | ID of membership being extended (if renewal) |
+| `membershipId` | string \| null | Created/activated `membershipId` |
+| `upiReference` | string \| null | Optional bank/UPI reference or transaction ID (manual UPI) |
+| `remarks` | string \| null | Optional staff notes/remarks |
+| `recordedBy` | string | UID of staff member who accepted payment (or `'system'`) |
+| `createdAt` | string (ISO UTC) | Payment record creation timestamp |
+| `updatedAt` | string (ISO UTC) | Last update timestamp |
+
+### `auditLogs` collection (`auditLogs/{logId}`)
+Documented per Task 29 specification:
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `actorId` | string | UID of staff member or user performing the action |
+| `action` | string | Action identifier (e.g. `'manual_payment_recorded'`, `'manual_payment_renewal'`) |
+| `targetId` | string | ID of the target document (e.g. `paymentId`, `membershipId`) |
+| `amountPaise` | number | Amount in integer paise involved in the transaction |
+| `method` | string | Payment method (`'cash'` \| `'upi'`) |
+| `timestamp` | string (ISO UTC) | Audit event timestamp |
+| `requestId` | string \| null | Request tracing ID (`req.id` or generated uuid) |
+| `metadata` | object | Supplementary audit context (memberName, planId, isRenewal, etc.) |
+| `createdAt` | string (ISO UTC) | Log creation timestamp |
+
 ---
 
 ## 3. Monetary & Timezone Conventions (ADR Compliance)
