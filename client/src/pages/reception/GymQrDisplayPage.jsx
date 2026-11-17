@@ -19,7 +19,7 @@ import { getCurrentQrToken, rotateQrToken } from '../../services/qrService';
 import './GymQrDisplayPage.css';
 
 export default function GymQrDisplayPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [tokenData, setTokenData] = useState(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -108,8 +108,9 @@ export default function GymQrDisplayPage() {
 
   // Initial load
   useEffect(() => {
+    if (authLoading) return;
     fetchActiveToken(false);
-  }, [fetchActiveToken]);
+  }, [fetchActiveToken, authLoading]);
 
   // Clock interval (updates every second)
   useEffect(() => {

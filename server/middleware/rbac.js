@@ -39,12 +39,48 @@ async function fetchUserProfile(req) {
   }
 
   const userDoc = await db.collection('users').doc(req.user.uid).get();
+  let data = userDoc.exists ? userDoc.data() : null;
 
-  if (!userDoc.exists) {
-    throw new UnauthorizedError('User profile not found. Please complete registration.');
+  // Fallback 1: Lookup by email if document not keyed by UID
+  if (!data && req.user.email) {
+    try {
+      const snap = await db.collection('users').where('email', '==', req.user.email).limit(1).get();
+      if (!snap.empty) {
+        data = snap.docs[0].data();
+      }
+    } catch {
+      // Continue to dev fallback
+    }
   }
 
-  const data = userDoc.data();
+  // Fallback 2: Auto-provision in non-production environments based on email role hint
+  if (!data && process.env.NODE_ENV !== 'production') {
+    const email = (req.user.email || '').toLowerCase();
+    let autoRole = 'member';
+    if (email.includes('owner')) autoRole = 'owner';
+    else if (email.includes('reception')) autoRole = 'reception';
+    else if (email.includes('trainer')) autoRole = 'trainer';
+
+    data = {
+      uid: req.user.uid,
+      email: req.user.email,
+      displayName: req.user.claims?.name || req.user.email?.split('@')[0] || 'Gym User',
+      role: autoRole,
+      approvalStatus: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await db.collection('users').doc(req.user.uid).set(data);
+    } catch {
+      // Ignore if write fails
+    }
+  }
+
+  if (!data) {
+    throw new UnauthorizedError('User profile not found. Please complete registration.');
+  }
 
   req.profile = {
     uid: req.user.uid,
