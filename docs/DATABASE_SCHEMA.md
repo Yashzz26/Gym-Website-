@@ -128,6 +128,20 @@ Documented per Task 29 specification:
 | `metadata` | object | Supplementary audit context (memberName, planId, isRenewal, etc.) |
 | `createdAt` | string (ISO UTC) | Log creation timestamp |
 
+### `qrTokens` collection (`qrTokens/{nonce}`)
+Documented per Task 31 specification (Day 16 rotating attendance QR tokens):
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `nonce` | string | Unique random cryptographic hex nonce |
+| `gymId` | string | Branch / gym identifier (default: `'fitmax-main'`) |
+| `iat` | number | Issued-at unix epoch seconds |
+| `exp` | number | Expiration unix epoch seconds (default 60s window) |
+| `expiresAt` | string (ISO UTC) | Expiration timestamp |
+| `isConsumed` | boolean | Replay protection flag (atomically set to true on check-in) |
+| `consumedAt` | string (ISO UTC) \| null | Timestamp when nonce was consumed |
+| `consumedBy` | string \| null | Member UID who consumed the token |
+| `createdAt` | string (ISO UTC) | Token generation timestamp |
+
 ---
 
 ## 3. Monetary & Timezone Conventions (ADR Compliance)

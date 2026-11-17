@@ -53,6 +53,10 @@ export const errorHandler = (err, req, res, _next) => {
       requestId,
     };
 
+    if (err.code) {
+      responsePayload.code = err.code;
+    }
+
     if (err.details) {
       responsePayload.details = err.details;
     }

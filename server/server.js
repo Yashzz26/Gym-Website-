@@ -32,6 +32,7 @@ import receptionRouter from './routes/reception.js';
 import membersRouter from './routes/members.js';
 import membershipsRouter from './routes/memberships.js';
 import paymentsRouter from './routes/payments.js';
+import qrRouter from './routes/qr.js';
 import paymentController from './controllers/paymentController.js';
 
 // ---------------------------------------------------------------------------
@@ -71,6 +72,7 @@ export const createApp = () => {
   app.use('/api/members', membersRouter);
   app.use('/api/memberships', membershipsRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/qr', qrRouter);
 
   // Direct Standard Checkout endpoints (/api/create-order and /api/verify-payment)
   app.post('/api/create-order', paymentController.createDirectOrder);

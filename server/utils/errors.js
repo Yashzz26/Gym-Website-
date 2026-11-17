@@ -65,3 +65,17 @@ export class TooManyRequestsError extends AppError {
   }
 }
 
+export class QrTokenError extends AppError {
+  /**
+   * @param {string} message
+   * @param {'invalid'|'expired'|'replayed'} code
+   * @param {number} [statusCode=400]
+   * @param {Array|Object|null} [details=null]
+   */
+  constructor(message, code, statusCode = 400, details = null) {
+    super(message, statusCode, details);
+    this.code = code;
+  }
+}
+
+
