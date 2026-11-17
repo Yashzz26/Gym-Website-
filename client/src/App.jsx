@@ -26,6 +26,7 @@ import TodayAttendancePage from './pages/reception/TodayAttendancePage';
 import FeesEntryPage from './pages/reception/FeesEntryPage';
 import RenewalListPage from './pages/reception/RenewalListPage';
 import RegisterMemberPage from './pages/reception/RegisterMemberPage';
+import GymQrDisplayPage from './pages/reception/GymQrDisplayPage';
 
 // Trainer Pages
 import MyMembersPage from './pages/trainer/MyMembersPage';
@@ -121,6 +122,7 @@ function AppRoutes() {
                 <Route path="/reception">
                   <Route index element={<Navigate to="/reception/attendance" replace />} />
                   <Route path="attendance" element={<TodayAttendancePage />} />
+                  <Route path="qr" element={<GymQrDisplayPage />} />
                   <Route path="fees" element={<FeesEntryPage />} />
                   <Route path="renewals" element={<RenewalListPage />} />
                   <Route path="register" element={<RegisterMemberPage />} />
@@ -146,6 +148,7 @@ function AppRoutes() {
                 <Route path="/owner">
                   <Route index element={<Navigate to="/owner/dashboard" replace />} />
                   <Route path="dashboard" element={<OwnerDashboardPage />} />
+                  <Route path="qr" element={<GymQrDisplayPage />} />
                   <Route path="reports" element={<DailyReportPage />} />
                   <Route path="inactive" element={<InactiveMembersPage />} />
                   <Route path="plans" element={<PlansManagementPage />} />

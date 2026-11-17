@@ -37,6 +37,7 @@ const ROLE_NAV_CONFIG = {
     badge: 'Owner',
     items: [
       { to: '/owner/dashboard', label: 'Owner Dashboard', icon: LayoutDashboard, screen: 'Dashboard' },
+      { to: '/owner/qr', label: 'Entrance QR Display', icon: QrCode, screen: 'Gate QR' },
       { to: '/owner/staff', label: 'Staff Approvals', icon: ShieldCheck, screen: 'Staff' },
       { to: '/owner/plans', label: 'Membership Plans', icon: Layers, screen: 'Plans' },
       { to: '/owner/inactive', label: 'Inactive Members', icon: UserX, screen: 'Screen 10' },
@@ -49,6 +50,7 @@ const ROLE_NAV_CONFIG = {
     badge: 'Reception',
     items: [
       { to: '/reception/attendance', label: "Today's Attendance", icon: CalendarCheck, screen: 'Screen 4' },
+      { to: '/reception/qr', label: 'Entrance QR Display', icon: QrCode, screen: 'Gate QR' },
       { to: '/reception/fees', label: 'Fees Entry', icon: Receipt, screen: 'Screen 5' },
       { to: '/reception/renewals', label: 'Renewal List', icon: Clock, screen: 'Screen 6' },
       { to: '/reception/register', label: 'New Member', icon: UserPlus, screen: 'Register' },
