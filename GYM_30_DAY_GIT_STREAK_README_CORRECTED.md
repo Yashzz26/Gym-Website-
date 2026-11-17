@@ -411,7 +411,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 16 --- Tuesday, 17 November 2026 --- QR attendance foundation
 
--   [ ] **Task 31: Create rotating QR token service** \[M\]
+-   [x] **Task 31: Create rotating QR token service** [M]
     -   Generate short-lived signed gym QR tokens on the backend,
         store/validate expiry and prevent token replay. Use an
         HMAC-signed token or signed JWT containing `gymId`, `iat`, `exp`
@@ -419,11 +419,11 @@ counts contribution days, not the number of commits as separate squares.
         server-side with expiry so replay attempts are rejected. Return
         distinct `expired`, `invalid` and `replayed` error codes.
     -   Commit: `feat(qr): generate short-lived attendance tokens`
--   [ ] **Task 32: Build gym QR display screen** \[M\]
+-   [x] **Task 32: Build gym QR display screen** [M]
     -   Create an owner/reception screen that displays and refreshes the
         current gym QR token with expiry/refresh feedback.
     -   Commit: `feat(qr): add gym QR display`
--   [ ] Both planned commits pushed and visible on GitHub (Day 16).
+-   [x] Both planned commits pushed and visible on GitHub (Day 16).
 
 ### Day 17 --- Wednesday, 18 November 2026 --- Member attendance
 
