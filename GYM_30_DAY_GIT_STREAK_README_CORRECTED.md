@@ -427,11 +427,11 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 17 --- Wednesday, 18 November 2026 --- Member attendance
 
--   [ ] **Task 33: Build member QR scanner** \[M\]
+-   [x] **Task 33: Build member QR scanner** [M]
     -   Use html5-qrcode to scan the gym QR on supported HTTPS devices;
         handle camera permission, invalid QR and scan errors.
     -   Commit: `feat(attendance): build member QR scanner`
--   [ ] **Task 34: Implement secure attendance check-in** \[M\]
+-   [x] **Task 34: Implement secure attendance check-in** [M]
     -   Validate token, user, active membership, session and duplicate
         rules on the backend; record server timestamp and return a
         definitive result. Perform check-in in a Firestore transaction:
@@ -439,7 +439,7 @@ counts contribution days, not the number of commits as separate squares.
         session and duplicate rules, then write. Never accept
         client-supplied timestamps.
     -   Commit: `feat(attendance): validate and record check-ins`
--   [ ] Both planned commits pushed and visible on GitHub (Day 17).
+-   [x] Both planned commits pushed and visible on GitHub (Day 17).
 
 ### Day 18 --- Thursday, 19 November 2026 --- Attendance reporting
 
