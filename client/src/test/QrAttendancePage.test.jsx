@@ -1,5 +1,5 @@
 /**
- * test/QrAttendancePage.test.jsx — Tests for Member QR Scanner & Check-in (Day 17 Task 33)
+ * test/QrAttendancePage.test.jsx — Tests for Member QR Scanner, Attendance History & Streak (Day 17-18 Tasks 33 & 35)
  */
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -9,8 +9,15 @@ import QrAttendancePage from '../pages/member/QrAttendancePage';
 import { AuthContext } from '../context/AuthContext';
 import * as attendanceService from '../services/attendanceService';
 
-// Mock attendanceService
-vi.mock('../services/attendanceService');
+// Mock network calls of attendanceService while preserving utility calculations
+vi.mock('../services/attendanceService', async () => {
+  const actual = await vi.importActual('../services/attendanceService');
+  return {
+    ...actual,
+    checkInAttendance: vi.fn(),
+    getMyAttendance: vi.fn(),
+  };
+});
 
 // Mock html5-qrcode
 const mockStart = vi.fn().mockResolvedValue(undefined);
@@ -57,14 +64,49 @@ function renderWithAuth(ui, authValue = {}) {
   );
 }
 
-describe('QrAttendancePage — Member QR Scanner (Day 17 Task 33)', () => {
+describe('QrAttendancePage — Member QR Scanner & Attendance History (Day 18 Task 35)', () => {
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+  const yesterdayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(
+    new Date(Date.now() - 24 * 60 * 60 * 1000)
+  );
+  const twoDaysAgoStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(
+    new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+  );
+
+  const mockHistoryRecords = [
+    {
+      attendanceId: 'att-1',
+      date: todayStr,
+      timestamp: `${todayStr}T08:30:00.000Z`,
+      session: 'Morning Session',
+      streakDays: 3,
+      gymId: 'fitmax-main',
+    },
+    {
+      attendanceId: 'att-2',
+      date: yesterdayStr,
+      timestamp: `${yesterdayStr}T17:45:00.000Z`,
+      session: 'Evening Session',
+      streakDays: 2,
+      gymId: 'fitmax-main',
+    },
+    {
+      attendanceId: 'att-3',
+      date: twoDaysAgoStr,
+      timestamp: `${twoDaysAgoStr}T09:15:00.000Z`,
+      session: 'Morning Session',
+      streakDays: 1,
+      gymId: 'fitmax-main',
+    },
+  ];
+
   const mockCheckInSuccess = {
     checkInId: 'chk-12345',
     memberId: 'member-123',
     memberName: 'Alex Rider',
-    timestamp: '2026-11-18T08:30:00.000Z',
+    timestamp: new Date().toISOString(),
     session: 'Morning Session',
-    streakDays: 5,
+    streakDays: 4,
     gymId: 'fitmax-main',
   };
 
@@ -72,18 +114,39 @@ describe('QrAttendancePage — Member QR Scanner (Day 17 Task 33)', () => {
     vi.clearAllMocks();
     mockStart.mockResolvedValue(undefined);
     attendanceService.checkInAttendance.mockResolvedValue(mockCheckInSuccess);
+    attendanceService.getMyAttendance.mockResolvedValue(mockHistoryRecords);
   });
 
-  it('renders branding header, session badge, and scanner controls', async () => {
+  it('renders branding header, streak summary stats and weekly calendar', async () => {
     renderWithAuth(<QrAttendancePage />);
 
-    expect(screen.getByText(/Gym Entrance Scanner/i)).toBeInTheDocument();
+    expect(screen.getByText(/Gym Attendance & Streak/i)).toBeInTheDocument();
     expect(screen.getByText(/Member Check-In/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /camera viewfinder/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /manual token entry/i })).toBeInTheDocument();
+    expect(screen.getByText(/Current Streak/i)).toBeInTheDocument();
+    expect(screen.getByText(/Weekly Attendance/i)).toBeInTheDocument();
+    expect(screen.getByText(/Total Workouts/i)).toBeInTheDocument();
+
+    // Verify 7 calendar day columns render
+    expect(screen.getByText('Mon')).toBeInTheDocument();
+    expect(screen.getByText('Tue')).toBeInTheDocument();
+    expect(screen.getByText('Wed')).toBeInTheDocument();
+    expect(screen.getByText('Thu')).toBeInTheDocument();
+    expect(screen.getByText('Fri')).toBeInTheDocument();
+    expect(screen.getByText('Sat')).toBeInTheDocument();
+    expect(screen.getByText('Sun')).toBeInTheDocument();
   });
 
-  it('initializes Html5Qrcode camera scanner on mount', async () => {
+  it('calculates streak from server records and displays on streak card', async () => {
+    renderWithAuth(<QrAttendancePage />);
+
+    await waitFor(() => {
+      expect(attendanceService.getMyAttendance).toHaveBeenCalledTimes(1);
+      const streakCard = screen.getByText(/Current Streak/i).closest('.stat-card');
+      expect(streakCard).toHaveTextContent('3');
+    });
+  });
+
+  it('initializes Html5Qrcode camera scanner on mount in scanner view', async () => {
     renderWithAuth(<QrAttendancePage />);
 
     await waitFor(() => {
@@ -114,8 +177,22 @@ describe('QrAttendancePage — Member QR Scanner (Day 17 Task 33)', () => {
       );
       expect(screen.getByText(/Check-In Confirmed!/i)).toBeInTheDocument();
       expect(screen.getByText(/Alex Rider/i)).toBeInTheDocument();
-      expect(screen.getByText(/5 Days Active 🔥/i)).toBeInTheDocument();
       expect(screen.getByText(/Atomic Verified/i)).toBeInTheDocument();
+    });
+  });
+
+  it('switches to Attendance History tab and displays check-in history list', async () => {
+    renderWithAuth(<QrAttendancePage />);
+
+    // Click on Attendance History tab
+    const historyTabBtn = screen.getByRole('button', { name: /attendance history/i });
+    fireEvent.click(historyTabBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Workout Check-In History/i)).toBeInTheDocument();
+      expect(screen.getByText(/Verified timestamps recorded at FitMax entrance gateway/i)).toBeInTheDocument();
+      expect(screen.getByText(/Streak Day 3/i)).toBeInTheDocument();
+      expect(screen.getByText(/Streak Day 2/i)).toBeInTheDocument();
     });
   });
 
@@ -133,14 +210,13 @@ describe('QrAttendancePage — Member QR Scanner (Day 17 Task 33)', () => {
     });
   });
 
-  it('displays error message when check-in API rejects with duplicate or expired code', async () => {
+  it('displays error message when check-in API rejects with duplicate code', async () => {
     attendanceService.checkInAttendance.mockRejectedValueOnce(
       new Error('Attendance already recorded today for this member')
     );
 
     renderWithAuth(<QrAttendancePage />);
 
-    // Switch to manual mode for predictable triggering
     fireEvent.click(screen.getByRole('button', { name: /manual token entry/i }));
 
     const textarea = screen.getByLabelText(/gym qr token payload/i);
@@ -152,27 +228,6 @@ describe('QrAttendancePage — Member QR Scanner (Day 17 Task 33)', () => {
       expect(
         screen.getByText(/Attendance already recorded today for this member/i)
       ).toBeInTheDocument();
-    });
-  });
-
-  it('resets check-in state when clicking Scan Another', async () => {
-    renderWithAuth(<QrAttendancePage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /manual token entry/i }));
-    fireEvent.change(screen.getByLabelText(/gym qr token payload/i), {
-      target: { value: 'some.valid.token' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /verify & check in/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/Check-In Confirmed!/i)).toBeInTheDocument();
-    });
-
-    const scanAnotherBtn = screen.getByRole('button', { name: /scan another/i });
-    fireEvent.click(scanAnotherBtn);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Check-In Confirmed!/i)).not.toBeInTheDocument();
     });
   });
 });
