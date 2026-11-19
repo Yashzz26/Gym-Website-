@@ -1,6 +1,6 @@
 /* ============================================================
-   QrAttendancePage.css — Member Live QR Scanner & Check-in
-   FitMax Midnight & Electric Accent Theme (Day 17 Task 33)
+   QrAttendancePage.css — Member Live QR Scanner & Attendance History
+   FitMax Midnight & Electric Accent Theme (Day 17 & 18 Task 35)
    ============================================================ */
 
 .qr-attendance-page {
@@ -14,7 +14,7 @@
 
 .qr-attendance-container {
   width: 100%;
-  max-width: 560px;
+  max-width: 680px;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -72,10 +72,501 @@
   font-size: 0.95rem;
   color: var(--color-text-secondary, #94a3b8);
   margin: 0;
-  max-width: 440px;
+  max-width: 520px;
 }
 
-/* Insecure context alert */
+/* ============================================================
+   1. STREAK & SUMMARY STATS GRID
+   ============================================================ */
+
+.streak-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.85rem;
+}
+
+.stat-card {
+  background: var(--color-bg-secondary, #0d1627);
+  border: 1px solid var(--color-border-subtle, #17243a);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.streak-card {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(13, 22, 39, 0.9));
+  border-color: rgba(249, 115, 22, 0.35);
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.12);
+}
+
+.stat-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.streak-icon-wrap {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+}
+
+.calendar-icon-wrap {
+  background: rgba(0, 229, 255, 0.15);
+  color: #00e5ff;
+}
+
+.workout-icon-wrap {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+.trophy-icon-wrap {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+}
+
+.flame-animate {
+  animation: pulseFlame 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulseFlame {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px #f97316); }
+  100% { transform: scale(1.15); filter: drop-shadow(0 0 8px #ea580c); }
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, #94a3b8);
+  letter-spacing: 0.03em;
+}
+
+.stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-text-primary, #f8fafc);
+  line-height: 1.1;
+}
+
+.stat-unit {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+.stat-subtext {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* ============================================================
+   2. WEEKLY CALENDAR CARD
+   ============================================================ */
+
+.weekly-calendar-card {
+  background: var(--color-bg-secondary, #0d1627);
+  border: 1px solid var(--color-border-subtle, #17243a);
+  border-radius: var(--radius-xl, 20px);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.calendar-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.header-title-group h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.calendar-week-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+.week-progress-indicator {
+  width: 140px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00e5ff, #10b981);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.calendar-days-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.calendar-day-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.25rem;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md, 12px);
+  transition: all 0.2s ease;
+}
+
+.calendar-day-col.checked-in {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.calendar-day-col.is-today {
+  border-color: var(--color-accent, #00e5ff);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+}
+
+.day-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #94a3b8);
+  text-transform: uppercase;
+}
+
+.day-number {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #f8fafc);
+}
+
+.day-status-indicator {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #070b14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.today-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00e5ff;
+  box-shadow: 0 0 6px #00e5ff;
+}
+
+.missed-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.future-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.day-session-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.15);
+  color: #00e5ff;
+}
+
+/* ============================================================
+   PAGE NAV TABS (Scanner vs History)
+   ============================================================ */
+
+.page-nav-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.nav-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: var(--color-bg-secondary, #0d1627);
+  border: 1px solid var(--color-border-subtle, #17243a);
+  border-radius: var(--radius-lg, 14px);
+  color: var(--color-text-secondary, #94a3b8);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-tab-btn:hover {
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.nav-tab-btn.active {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: var(--color-accent, #00e5ff);
+  color: #00e5ff;
+  box-shadow: 0 4px 16px rgba(0, 229, 255, 0.15);
+}
+
+/* ============================================================
+   ATTENDANCE HISTORY CARD & TIMELINE
+   ============================================================ */
+
+.history-card {
+  background: var(--color-bg-secondary, #0d1627);
+  border: 1px solid var(--color-border-subtle, #17243a);
+  border-radius: var(--radius-xl, 20px);
+  padding: 1.75rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-card-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.history-card-header p {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #94a3b8);
+  margin: 0.25rem 0 0 0;
+}
+
+.btn-refresh-history {
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-refresh-history:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.history-loading-state,
+.history-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  gap: 1rem;
+}
+
+.history-empty-state .empty-icon {
+  color: #475569;
+}
+
+.history-empty-state h3 {
+  font-size: 1.15rem;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.history-empty-state p {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  max-width: 380px;
+  margin: 0;
+}
+
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.history-row-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg, 14px);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.history-row-card:hover {
+  transform: translateX(3px);
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+.row-date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.badge-month {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #00e5ff;
+  line-height: 1;
+}
+
+.badge-day {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.1;
+}
+
+.row-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.row-top-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.row-full-date {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.row-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.row-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.session-pill,
+.streak-pill,
+.gym-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.pill-morning {
+  background: rgba(255, 171, 0, 0.12);
+  border: 1px solid rgba(255, 171, 0, 0.25);
+  color: #ffab00;
+}
+
+.pill-evening {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #c084fc;
+}
+
+.streak-pill {
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  color: #fb923c;
+}
+
+.gym-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+/* ============================================================
+   SCANNER CARD & VIEWFINDER
+   ============================================================ */
+
 .alert-warning {
   display: flex;
   align-items: flex-start;
@@ -89,7 +580,6 @@
   line-height: 1.4;
 }
 
-/* Scanner Card */
 .scanner-card {
   background: var(--color-bg-secondary, #0d1627);
   border: 1px solid var(--color-border-subtle, #17243a);
@@ -101,7 +591,6 @@
   gap: 1.5rem;
 }
 
-/* Tabs */
 .scanner-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -138,7 +627,6 @@
   box-shadow: 0 4px 12px rgba(0, 229, 255, 0.25);
 }
 
-/* Viewfinder Section */
 .viewfinder-section {
   display: flex;
   flex-direction: column;
@@ -171,7 +659,6 @@
   object-fit: cover !important;
 }
 
-/* Reticle Overlay */
 .target-reticle {
   position: absolute;
   inset: 24px;
@@ -227,17 +714,9 @@
 }
 
 @keyframes laserSweep {
-  0% {
-    top: 5%;
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    top: 95%;
-    opacity: 0.4;
-  }
+  0% { top: 5%; opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { top: 95%; opacity: 0.4; }
 }
 
 .scanner-guidance {
@@ -246,7 +725,6 @@
   color: var(--color-text-secondary, #94a3b8);
 }
 
-/* Error Banner */
 .scan-error-banner {
   width: 100%;
   display: flex;
@@ -377,7 +855,15 @@
   color: #34d399;
 }
 
-/* Notice View (Permission / No camera) */
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+/* Notice View */
 .state-notice .notice-icon {
   color: #f87171;
 }
@@ -493,7 +979,6 @@
   width: 100%;
 }
 
-/* Footer */
 .attendance-footer {
   display: flex;
   align-items: center;
