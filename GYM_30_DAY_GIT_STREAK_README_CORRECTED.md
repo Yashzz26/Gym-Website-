@@ -443,15 +443,15 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 18 --- Thursday, 19 November 2026 --- Attendance reporting
 
--   [ ] **Task 35: Build member attendance history and streak** \[M\]
+-   [x] **Task 35: Build member attendance history and streak** [M]
     -   Display member check-in history, weekly calendar and streak
         calculated from server records.
     -   Commit: `feat(member): show attendance history and streak`
--   [ ] **Task 36: Build reception today's attendance** \[M\]
+-   [x] **Task 36: Build reception today's attendance** [M]
     -   Show daily total, morning/evening counts, member names and
         server-recorded entry times with search/filter.
     -   Commit: `feat(reception): build daily attendance screen`
--   [ ] Both planned commits pushed and visible on GitHub (Day 18).
+-   [x] Both planned commits pushed and visible on GitHub (Day 18).
 
 ### Day 19 --- Friday, 20 November 2026 --- Trainer assignments
 
