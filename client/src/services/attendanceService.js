@@ -207,9 +207,42 @@ export function getWeeklyCalendar(records = [], referenceDate = new Date()) {
   };
 }
 
+/**
+ * Fetch daily attendance overview (Staff / Owner).
+ *
+ * @param {string} [dateStr] - YYYY-MM-DD (defaults to today)
+ * @param {string} authToken - Firebase ID token
+ * @param {string} [gymId='fitmax-main']
+ * @returns {Promise<Object>} { date, gymId, totalCount, morningCount, eveningCount, generalCount, records }
+ */
+export async function getTodayAttendance(dateStr, authToken, gymId = 'fitmax-main') {
+  const headers = {};
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+
+  const queryParams = new URLSearchParams();
+  if (dateStr) queryParams.set('date', dateStr);
+  if (gymId) queryParams.set('gymId', gymId);
+
+  const url = `${API_BASE}/attendance/today?${queryParams.toString()}`;
+  const res = await fetch(url, { headers });
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const error = new Error(body.message || 'Failed to fetch daily attendance');
+    error.status = res.status;
+    error.code = body.code;
+    throw error;
+  }
+
+  return body.data;
+}
+
 export default {
   checkInAttendance,
   getMyAttendance,
+  getTodayAttendance,
   calculateStreakFromRecords,
   getWeeklyCalendar,
 };
