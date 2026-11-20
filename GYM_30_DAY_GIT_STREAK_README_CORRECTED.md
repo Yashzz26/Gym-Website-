@@ -455,15 +455,15 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 19 --- Friday, 20 November 2026 --- Trainer assignments
 
--   [ ] **Task 37: Create trainer assignment APIs** \[M\]
+-   [x] **Task 37: Create trainer assignment APIs** [M]
     -   Allow owner/authorized staff to assign and unassign members to
         trainers; enforce trainer access only to assigned members.
     -   Commit: `feat(trainer): add member assignment APIs`
--   [ ] **Task 38: Build trainer member list** \[M\]
+-   [x] **Task 38: Build trainer member list** [M]
     -   Create the trainer's assigned-member view with fitness goal,
         attendance summary and available progress information.
     -   Commit: `feat(trainer): build assigned members screen`
--   [ ] Both planned commits pushed and visible on GitHub (Day 19).
+-   [x] Both planned commits pushed and visible on GitHub (Day 19).
 
 ### Day 20 --- Saturday, 21 November 2026 --- Workout plans
 
