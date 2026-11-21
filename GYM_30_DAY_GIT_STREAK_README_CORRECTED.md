@@ -467,15 +467,15 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 20 --- Saturday, 21 November 2026 --- Workout plans
 
--   [ ] **Task 39: Create workout plan APIs and validation** \[M\]
+-   [x] **Task 39: Create workout plan APIs and validation** [M]
     -   Allow trainers to create/update plans for assigned members with
         exercise name, sets, reps, weekday and optional video URL.
     -   Commit: `feat(workouts): add workout plan APIs`
--   [ ] **Task 40: Build member workout and completion tracking** \[M\]
+-   [x] **Task 40: Build member workout and completion tracking** [M]
     -   Display the member's workout, allow exercise completion and
         persist daily workout logs/progress.
     -   Commit: `feat(workouts): add member workout tracking`
--   [ ] Both planned commits pushed and visible on GitHub (Day 20).
+-   [x] Both planned commits pushed and visible on GitHub (Day 20).
 
 ### Day 21 --- Sunday, 22 November 2026 --- Diet plans
 
