@@ -479,16 +479,16 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 21 --- Sunday, 22 November 2026 --- Diet plans
 
--   [ ] **Task 41: Create diet plan APIs** \[M\]
+-   [x] **Task 41: Create diet plan APIs** [M]
     -   Allow trainers to create/update diet plans for assigned members
         with calories, macros and meal breakdown.
     -   Commit: `feat(diet): add diet plan APIs`
--   [ ] **Task 42: Build trainer diet editor and member diet view**
-    \[M\]
+-   [x] **Task 42: Build trainer diet editor and member diet view**
+    [M]
     -   Build diet plan creation/editing and a member-facing read-only
         diet view with meal and macro details.
     -   Commit: `feat(diet): build diet plan interfaces`
--   [ ] Both planned commits pushed and visible on GitHub (Day 21).
+-   [x] Both planned commits pushed and visible on GitHub (Day 21).
 
 ### Day 22 --- Monday, 23 November 2026 --- Renewals
 

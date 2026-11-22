@@ -72,6 +72,7 @@ const ROLE_NAV_CONFIG = {
       { to: '/member/join', label: 'Online Joining', icon: CreditCard, screen: 'Screen 1' },
       { to: '/member/attendance', label: 'QR Attendance', icon: QrCode, screen: 'Screen 2' },
       { to: '/member/workout', label: 'Workout Plan', icon: Dumbbell, screen: 'Screen 3' },
+      { to: '/member/diet', label: 'Diet Plan', icon: Utensils, screen: 'Diet' },
       { to: '/member/profile', label: 'My Membership', icon: User, screen: 'Profile' },
     ],
   },

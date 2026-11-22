@@ -19,6 +19,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import OnlineJoiningPage from './pages/member/OnlineJoiningPage';
 import QrAttendancePage from './pages/member/QrAttendancePage';
 import WorkoutPlanPage from './pages/member/WorkoutPlanPage';
+import MemberDietPage from './pages/member/MemberDietPage';
 import MemberProfilePage from './pages/member/MemberProfilePage';
 
 // Reception Pages
@@ -111,6 +112,7 @@ function AppRoutes() {
                   <Route index element={<Navigate to="/member/join" replace />} />
                   <Route path="attendance" element={<QrAttendancePage />} />
                   <Route path="workout" element={<WorkoutPlanPage />} />
+                  <Route path="diet" element={<MemberDietPage />} />
                   <Route path="profile" element={<MemberProfilePage />} />
                 </Route>
               </Route>
