@@ -68,3 +68,14 @@ export async function createMembership(data, token) {
   );
   return response.data;
 }
+
+export async function getExpiringMemberships(token, options = {}) {
+  const days = options.days || 7;
+  const includeExpired = options.includeExpired ? '&includeExpired=true' : '';
+  const response = await fetchWithAuth(
+    `${API_BASE}/memberships/expiring?days=${days}${includeExpired}`,
+    { method: 'GET' },
+    token
+  );
+  return response.data;
+}

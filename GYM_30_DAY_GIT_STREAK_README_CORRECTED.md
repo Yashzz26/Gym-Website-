@@ -499,12 +499,12 @@ counts contribution days, not the number of commits as separate squares.
         this stage so approval delays do not block later automation;
         document any pending approval.
     -   Commit: `feat(renewals): add expiring membership API`
--   [ ] **Task 44: Build reception renewal list and renewal action**
-    \[M\]
+-   [x] **Task 44: Build reception renewal list and renewal action**
+    [M]
     -   Show days remaining and allow authorized staff to initiate a
         renewal while preserving the previous membership record.
     -   Commit: `feat(reception): build renewal management`
--   [ ] Both planned commits pushed and visible on GitHub (Day 22).
+-   [x] Both planned commits pushed and visible on GitHub (Day 22).
 
 ### Day 23 --- Tuesday, 24 November 2026 --- Inactive members
 
