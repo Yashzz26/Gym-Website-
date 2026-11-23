@@ -274,6 +274,135 @@ export const createMembershipService = (customDb = defaultDb) => {
         totalMemberships: records.length,
       };
     },
+
+    /**
+     * Retrieve memberships expiring within a specified window (default 7 days).
+     * Filtered for active accounts, sorted chronologically ascending by endDate.
+     * Enriched with user profile details (displayName, phone, email).
+     * Excludes already renewed memberships (nextMembershipId present).
+     *
+     * @param {Object} options
+     * @param {number} [options.days=7] - Expiry lookahead window in days
+     * @param {boolean} [options.includeExpired=false] - Whether to include recently expired
+     * @returns {Promise<{count: number, windowDays: number, memberships: Array<Object>}>}
+     */
+    async getExpiringMemberships(options = {}) {
+      const days = Number(options.days) || 7;
+      const includeExpired = Boolean(options.includeExpired);
+
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+      // Fetch active memberships
+      const snapshot = await getMembershipsCollection()
+        .where('status', '==', 'active')
+        .get();
+
+      const candidateDocs = [];
+      const userIds = new Set();
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.nextMembershipId) return; // Already renewed
+
+        const endDate = new Date(data.endDate);
+        if (isNaN(endDate.getTime())) return;
+
+        const isFutureWithinWindow = endDate >= now && endDate <= windowEnd;
+        const isPastWithinWindow =
+          includeExpired &&
+          endDate < now &&
+          endDate >= new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+        if (isFutureWithinWindow || isPastWithinWindow) {
+          candidateDocs.push({ id: doc.id, data });
+          if (data.userId) userIds.add(data.userId);
+        }
+      });
+
+      if (includeExpired) {
+        const expiredSnapshot = await getMembershipsCollection()
+          .where('status', '==', 'expired')
+          .get();
+
+        expiredSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.nextMembershipId) return;
+
+          const endDate = new Date(data.endDate);
+          if (isNaN(endDate.getTime())) return;
+
+          const isRecentExpired =
+            endDate < now &&
+            endDate >= new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+          if (isRecentExpired && !candidateDocs.some((c) => c.id === doc.id)) {
+            candidateDocs.push({ id: doc.id, data });
+            if (data.userId) userIds.add(data.userId);
+          }
+        });
+      }
+
+      // Fetch user profile maps
+      const userProfiles = new Map();
+      await Promise.all(
+        Array.from(userIds).map(async (uid) => {
+          try {
+            const userDoc = await getUsersCollection().doc(uid).get();
+            if (userDoc.exists) {
+              userProfiles.set(uid, userDoc.data());
+            }
+          } catch {
+            // Ignore individual fetch failure
+          }
+        })
+      );
+
+      const expiringList = [];
+      for (const { id, data } of candidateDocs) {
+        const endDate = new Date(data.endDate);
+        const daysRemaining = Math.max(
+          0,
+          Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        );
+        const isExpired = endDate < now;
+
+        let urgency = 'normal';
+        if (isExpired || daysRemaining <= 1) {
+          urgency = 'critical'; // Expires today or expired
+        } else if (daysRemaining <= 3) {
+          urgency = 'urgent';   // 2-3 days left
+        } else if (daysRemaining <= 7) {
+          urgency = 'warning';  // 4-7 days left
+        }
+
+        const userProfile = userProfiles.get(data.userId) || {};
+
+        expiringList.push({
+          membershipId: id,
+          ...data,
+          daysRemaining,
+          isExpired,
+          urgency,
+          member: {
+            userId: data.userId,
+            displayName: userProfile.displayName || userProfile.name || 'Registered Member',
+            phone: userProfile.phone || userProfile.phoneNumber || '',
+            email: userProfile.email || '',
+            photoUrl: userProfile.photoUrl || null,
+          },
+        });
+      }
+
+      // Sort chronologically ascending by endDate (soonest to expire first)
+      expiringList.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+
+      return {
+        count: expiringList.length,
+        windowDays: days,
+        memberships: expiringList,
+      };
+    },
   };
 };
 

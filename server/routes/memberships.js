@@ -40,6 +40,15 @@ export const createMembershipsRouter = ({
     controller.renewMembership
   );
 
+  // Get expiring memberships query (Staff/Owner) — Task 43 (Day 22)
+  router.get(
+    '/expiring',
+    verifyToken,
+    allowStaff,
+    requireActiveStatus,
+    controller.getExpiringMemberships
+  );
+
   // Get single membership by ID (Staff or Self)
   router.get(
     '/:id',

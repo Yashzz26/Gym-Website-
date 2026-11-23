@@ -426,4 +426,109 @@ describe('Day 12 Task 23: Membership Lifecycle and Renewals API', () => {
     assert.ok(res.body.data.activeMembership);
     assert.equal(res.body.data.history.length, 2);
   });
+
+  // --------------------------------------------------------------------------
+  // Day 22 Task 43: Expiring Memberships API
+  // --------------------------------------------------------------------------
+
+  test('GET /api/memberships/expiring - rejects unauthenticated requests with 401', async () => {
+    testEnv.setAuth(null);
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/memberships/expiring',
+      method: 'GET',
+    });
+
+    assert.equal(res.status, 401);
+  });
+
+  test('GET /api/memberships/expiring - rejects member role with 403 (staff only)', async () => {
+    testEnv.setAuth(
+      { uid: 'user-member-1', email: 'member1@gym.com' },
+      { role: 'member', approvalStatus: 'active' }
+    );
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/memberships/expiring',
+      method: 'GET',
+    });
+
+    assert.equal(res.status, 403);
+  });
+
+  test('GET /api/memberships/expiring - returns memberships expiring within 7 days sorted soonest first', async () => {
+    testEnv.setAuth(
+      { uid: 'staff-reception-1', email: 'reception@gym.com' },
+      { role: 'reception', approvalStatus: 'active' }
+    );
+
+    // Seed a membership expiring in 3 days
+    const in3Days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    await testEnv.mockDb.collection('memberships').add({
+      userId: 'user-member-2',
+      planId: 'plan-1-month',
+      planName: '1 Month Starter',
+      durationDays: 30,
+      priceInPaise: 149900,
+      startDate: new Date(Date.now() - 27 * 24 * 60 * 60 * 1000).toISOString(),
+      endDate: in3Days,
+      status: 'active',
+      paymentStatus: 'paid',
+      createdAt: new Date().toISOString(),
+    });
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/memberships/expiring?days=7',
+      method: 'GET',
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.status, 'success');
+    assert.ok(Array.isArray(res.body.data.memberships));
+    assert.ok(res.body.data.count >= 1);
+
+    const found = res.body.data.memberships.find((m) => m.userId === 'user-member-2');
+    assert.ok(found, 'Should find user-member-2 in expiring memberships');
+    assert.equal(found.member.displayName, 'Member Two');
+    assert.equal(found.urgency, 'urgent');
+    assert.ok(found.daysRemaining <= 3);
+  });
+
+  test('GET /api/memberships/expiring - excludes already renewed memberships', async () => {
+    testEnv.setAuth(
+      { uid: 'staff-reception-1', email: 'reception@gym.com' },
+      { role: 'reception', approvalStatus: 'active' }
+    );
+
+    // Seed a membership that is expiring in 2 days BUT has already been renewed (nextMembershipId present)
+    const in2Days = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+    await testEnv.mockDb.collection('memberships').add({
+      userId: 'user-member-1',
+      planId: 'plan-1-month',
+      planName: '1 Month Starter',
+      durationDays: 30,
+      endDate: in2Days,
+      status: 'active',
+      nextMembershipId: 'membership-already-renewed-123',
+    });
+
+    const res = await makeRequest(serverInstance, {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/memberships/expiring?days=7',
+      method: 'GET',
+    });
+
+    assert.equal(res.status, 200);
+    const renewed = res.body.data.memberships.find(
+      (m) => m.nextMembershipId === 'membership-already-renewed-123'
+    );
+    assert.equal(renewed, undefined, 'Already renewed membership should not appear in expiring list');
+  });
 });

@@ -492,7 +492,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 22 --- Monday, 23 November 2026 --- Renewals
 
--   [ ] **Task 43: Create expiring membership query/API** \[M\]
+-   [x] **Task 43: Create expiring membership query/API** [M]
     -   Return memberships expiring within the configured window, sorted
         by expiry, with correct timezone/date handling. Begin
         preparing/submitting WhatsApp templates for Meta approval by

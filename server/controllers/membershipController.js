@@ -89,6 +89,22 @@ export const createMembershipController = (service = defaultService) => {
         next(err);
       }
     },
+
+    async getExpiringMemberships(req, res, next) {
+      try {
+        const days = req.query.days ? parseInt(req.query.days, 10) : 7;
+        const includeExpired = req.query.includeExpired === 'true';
+
+        const result = await service.getExpiringMemberships({ days, includeExpired });
+
+        res.status(200).json({
+          status: 'success',
+          data: result,
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
   };
 };
 
