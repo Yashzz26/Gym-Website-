@@ -1,6 +1,6 @@
 /* ============================================================
-   PlansManagementPage.css — Styling for Membership Plans Management
-   Gym Management System
+   PlansManagementPage.css — Industrial/Disciplined Membership Plans
+   IRONCORE Gym Management System
    ============================================================ */
 
 .plans-management-page {
@@ -27,17 +27,20 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  letter-spacing: -0.02em;
 }
 
 .plans-header-text p {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  margin-top: var(--spacing-1);
 }
 
 .plans-top-actions {
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
+  flex-wrap: wrap;
 }
 
 /* Plan filters & Controls */
@@ -57,15 +60,19 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  background-color: var(--color-bg-primary);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .filter-pill-btn {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  padding: 0.35rem 0.85rem;
-  border-radius: var(--radius-full);
-  background-color: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  border: 1px solid transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -73,13 +80,13 @@
 
 .filter-pill-btn:hover {
   color: var(--color-text-primary);
-  border-color: var(--color-border-strong);
 }
 
 .filter-pill-btn.active {
-  background-color: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-contrast);
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Plans Grid */
@@ -105,15 +112,14 @@
 }
 
 .plan-card:hover {
-  border-color: var(--color-accent-border);
+  border-color: var(--color-border-default);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 128, 255, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .plan-card.featured {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 24px rgba(0, 128, 255, 0.25);
-  background: linear-gradient(180deg, rgba(0, 128, 255, 0.06) 0%, var(--color-bg-secondary) 100%);
+  border-top: 2px solid var(--color-accent);
+  background: linear-gradient(180deg, var(--color-accent-subtle) 0%, var(--color-bg-secondary) 15%);
 }
 
 .plan-card-header {
@@ -132,8 +138,8 @@
 .plan-badge-tag {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  padding: 0.2rem 0.65rem;
-  border-radius: var(--radius-full);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-xs);
   background-color: var(--color-accent-subtle);
   color: var(--color-accent);
   border: 1px solid var(--color-accent-border);
@@ -145,17 +151,19 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-xs);
 }
 
 .plan-status-badge.active {
   background-color: var(--color-success-bg);
   color: var(--color-success);
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 .plan-status-badge.inactive {
   background-color: var(--color-danger-bg);
   color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .plan-name {
@@ -163,6 +171,7 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .plan-desc {
@@ -186,6 +195,7 @@
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .plan-price-frequency {
@@ -208,6 +218,7 @@
   gap: var(--spacing-2);
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
+  line-height: 1.4;
 }
 
 .feature-check-icon {
@@ -246,7 +257,7 @@
 
 .plan-action-btn.edit:hover {
   background-color: var(--color-bg-elevated);
-  border-color: var(--color-accent-border);
+  border-color: var(--color-border-strong);
 }
 
 .plan-action-btn.toggle {
@@ -284,6 +295,7 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .preset-selector-bar {
@@ -292,8 +304,9 @@
   gap: var(--spacing-2);
   flex-wrap: wrap;
   padding: var(--spacing-3);
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-tertiary);
   border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .preset-btn {
@@ -309,8 +322,8 @@
 }
 
 .preset-btn:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
 }
 
 .feature-input-row {
@@ -329,10 +342,12 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .remove-feature-btn:hover {
   background-color: var(--color-danger-bg);
+  border-color: var(--color-danger);
 }
 
 .add-feature-btn {
@@ -340,14 +355,15 @@
   align-items: center;
   gap: var(--spacing-1);
   font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
   background: transparent;
   border: none;
   cursor: pointer;
   margin-top: var(--spacing-1);
+  padding: 0.25rem 0;
 }
 
 .add-feature-btn:hover {
   text-decoration: underline;
 }
-

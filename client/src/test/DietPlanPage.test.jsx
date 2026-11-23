@@ -167,7 +167,7 @@ describe('Diet Plan Interfaces (Day 21 Task 42)', () => {
       render(<DietPlanPage />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('add-meal-btn')).toBeInTheDocument();
+        expect(screen.getByTestId('plan-title-input')).toHaveValue('Lean Muscle Hypertrophy');
       });
 
       const initialMealsCount = screen.getAllByTestId(/meal-block-/).length;

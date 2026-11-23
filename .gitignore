@@ -83,3 +83,9 @@ client/public/workbox-*.js
 # ========================
 coverage/
 .nyc_output/
+
+# ========================
+# Agents & Skills
+# ========================
+.agents/
+

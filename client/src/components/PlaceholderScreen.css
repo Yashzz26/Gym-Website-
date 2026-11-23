@@ -14,7 +14,7 @@
   gap: var(--spacing-4);
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   padding: var(--spacing-8);
   box-shadow: var(--shadow-card);
 }
@@ -28,14 +28,15 @@
 }
 
 .placeholder-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
   background-color: var(--color-accent-subtle);
   border: 1px solid var(--color-accent-border);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--color-accent);
 }
 
 .placeholder-meta {
@@ -46,7 +47,8 @@
 
 .placeholder-title {
   font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
   color: var(--color-text-primary);
   margin: 0;
 }
@@ -60,6 +62,7 @@
 
 .placeholder-features {
   background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
   padding: var(--spacing-4) var(--spacing-5);
   display: flex;
@@ -68,9 +71,10 @@
 }
 
 .placeholder-features h3 {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--color-text-muted);
   margin: 0 0 var(--spacing-1) 0;
 }
@@ -94,7 +98,7 @@
 
 .placeholder-features .bullet {
   color: var(--color-accent);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
 }
 
 .placeholder-footer {
@@ -109,9 +113,8 @@
 }
 
 .placeholder-status-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: var(--radius-full);
   background-color: var(--color-success);
-  box-shadow: 0 0 8px var(--color-success);
 }

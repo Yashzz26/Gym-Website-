@@ -1,6 +1,6 @@
 /* ============================================================
-   OwnerDashboardPage.css — Styling for Owner Dashboard Shell
-   Gym Management System
+   OwnerDashboardPage.css — Industrial/Disciplined Owner Dashboard
+   IRONCORE Gym Management System
    ============================================================ */
 
 .owner-dashboard {
@@ -19,23 +19,12 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-4);
-  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+  background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
   padding: var(--spacing-6);
   position: relative;
-  overflow: hidden;
-}
-
-.dashboard-header::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 250px;
-  height: 100%;
-  background: radial-gradient(circle, var(--color-accent-subtle) 0%, transparent 70%);
-  pointer-events: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .dashboard-title-group h1 {
@@ -46,11 +35,13 @@
   align-items: center;
   gap: var(--spacing-3);
   margin-bottom: var(--spacing-1);
+  letter-spacing: -0.02em;
 }
 
 .dashboard-title-group p {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  margin: 0;
 }
 
 .dashboard-role-badge {
@@ -60,8 +51,8 @@
   background-color: var(--color-accent-subtle);
   color: var(--color-accent);
   border: 1px solid var(--color-accent-border);
-  padding: 0.2rem 0.65rem;
-  border-radius: var(--radius-full);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-xs);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
@@ -72,43 +63,56 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
+  flex-wrap: wrap;
 }
 
 .date-chip {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  background-color: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-subtle);
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .refresh-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-2);
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.refresh-button:hover {
-  background-color: var(--color-bg-tertiary);
+.refresh-button:hover:not(:disabled) {
+  background-color: var(--color-bg-elevated);
   border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-button .spin {
+  animation: spin 1s linear infinite;
 }
 
 /* Metrics & Report Cards Grid */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: var(--spacing-4);
 }
 
@@ -121,12 +125,17 @@
   flex-direction: column;
   justify-content: space-between;
   gap: var(--spacing-3);
-  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .metric-card:hover {
   border-color: var(--color-border-default);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+
+.metric-card.accent {
+  border-left: 3px solid var(--color-accent);
 }
 
 .metric-card-top {
@@ -139,8 +148,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
 
 .metric-icon-wrap {
@@ -150,11 +158,13 @@
   display: grid;
   place-items: center;
   background-color: var(--color-bg-tertiary);
-  color: var(--color-accent);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
 }
 
 .metric-card.accent .metric-icon-wrap {
   background-color: var(--color-accent-subtle);
+  border-color: var(--color-accent-border);
   color: var(--color-accent);
 }
 
@@ -169,22 +179,26 @@
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-subtext {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+  line-height: 1.4;
 }
 
 .metric-empty-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.3rem;
   font-size: var(--font-size-xs);
   color: var(--color-warning);
   background-color: var(--color-warning-bg);
+  border: 1px solid rgba(234, 179, 8, 0.25);
   padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-xs);
   width: fit-content;
 }
 
@@ -197,11 +211,12 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  letter-spacing: -0.01em;
 }
 
 .quick-actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-4);
 }
 
@@ -218,14 +233,14 @@
   color: inherit;
   transition: all var(--transition-fast);
   position: relative;
-  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .quick-action-card:hover {
   background-color: var(--color-bg-tertiary);
-  border-color: var(--color-accent-border);
+  border-color: var(--color-border-strong);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-md);
 }
 
 .quick-action-card:hover .action-arrow {
@@ -243,7 +258,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-subtle);
   display: grid;
   place-items: center;
@@ -277,11 +292,12 @@
 
 .action-arrow {
   transition: transform var(--transition-fast), color var(--transition-fast);
+  color: var(--color-text-muted);
 }
 
 /* Setup Guide / Empty States Container */
 .setup-guide-card {
-  background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+  background-color: var(--color-bg-secondary);
   border: 1px dashed var(--color-border-default);
   border-radius: var(--radius-xl);
   padding: var(--spacing-6);
@@ -302,17 +318,20 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .setup-steps-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--spacing-3);
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .setup-step-item {
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
   padding: var(--spacing-3) var(--spacing-4);
@@ -325,25 +344,36 @@
 }
 
 .setup-step-item:hover {
-  border-color: var(--color-accent);
-  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-accent-border);
+  background-color: var(--color-bg-elevated);
 }
 
 .step-number {
   width: 24px;
   height: 24px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-xs);
   background-color: var(--color-accent-subtle);
   color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .step-text {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

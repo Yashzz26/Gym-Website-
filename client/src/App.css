@@ -26,7 +26,7 @@
 
 .app-root h1 {
   font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-extrabold);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
   letter-spacing: -0.02em;
 }
