@@ -75,7 +75,7 @@
   border: 1px solid transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .filter-pill-btn:hover {
@@ -107,7 +107,7 @@
   justify-content: space-between;
   gap: var(--spacing-5);
   position: relative;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   box-shadow: var(--shadow-card);
 }
 
@@ -246,7 +246,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-1);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .plan-action-btn.edit {
@@ -318,7 +318,7 @@
   border: 1px solid var(--color-border-default);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .preset-btn:hover {
@@ -342,7 +342,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .remove-feature-btn:hover {

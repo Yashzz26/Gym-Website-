@@ -3,12 +3,10 @@ import {
   Receipt,
   Search,
   User,
-  CreditCard,
   Banknote,
   QrCode,
   CheckCircle2,
   AlertCircle,
-  Calendar,
   Printer,
   RefreshCw,
   Clock,
@@ -300,7 +298,7 @@ export default function FeesEntryPage() {
               <div className="receipt-field">
                 <span className="field-label">Date & Time</span>
                 <span className="field-value">
-                  {new Date(successReceipt.recordedAt || Date.now()).toLocaleString('en-IN', {
+                  {new Date(successReceipt.recordedAt || undefined).toLocaleString('en-IN', {
                     dateStyle: 'medium',
                     timeStyle: 'short',
                   })}

@@ -6,7 +6,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Check,
-  ShieldCheck,
   AlertCircle,
   RefreshCw,
   XCircle,
@@ -90,7 +89,7 @@ export default function OnlineJoiningPage() {
     if (profile?.phone && !formData.phone) {
       setFormData((prev) => ({ ...prev, phone: profile.phone }));
     }
-  }, [profile]);
+  }, [profile, formData.phone]);
 
   const handleSelectPlan = (plan) => {
     setSelectedPlan(plan);

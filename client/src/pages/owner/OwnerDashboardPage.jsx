@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
@@ -14,7 +14,6 @@ import {
   RefreshCw,
   Clock,
   BarChart3,
-  CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -44,10 +43,18 @@ export default function OwnerDashboardPage({ initialStats = null }) {
       pendingStaffCount: 0,
     }
   );
-  const [loading, setLoading] = useState(!initialStats);
   const [refreshing, setRefreshing] = useState(false);
+  const [todayStr] = useState(() =>
+    new Intl.DateTimeFormat('en-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date())
+  );
 
-  const fetchDashboardData = async () => {
+  const userUid = user?.uid;
+  const fetchDashboardData = useCallback(async () => {
     try {
       setRefreshing(true);
       const token = user?.getIdToken ? await user.getIdToken() : null;
@@ -69,23 +76,15 @@ export default function OwnerDashboardPage({ initialStats = null }) {
         pendingStaffCount: pendingCount,
       }));
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [userUid]);
 
   useEffect(() => {
     if (!initialStats) {
       fetchDashboardData();
     }
-  }, [initialStats]);
-
-  const todayStr = new Intl.DateTimeFormat('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date());
+  }, [initialStats, fetchDashboardData]);
 
   const quickActions = [
     {

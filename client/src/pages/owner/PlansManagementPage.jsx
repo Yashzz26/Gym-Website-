@@ -8,7 +8,6 @@ import {
   AlertCircle,
   ToggleLeft,
   ToggleRight,
-  Sparkles,
   RefreshCw,
   X,
   Trash2,

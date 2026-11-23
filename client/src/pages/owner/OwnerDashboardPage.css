@@ -91,7 +91,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .refresh-button:hover:not(:disabled) {
@@ -231,7 +231,7 @@
   gap: var(--spacing-3);
   text-decoration: none;
   color: inherit;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   position: relative;
   box-shadow: var(--shadow-sm);
 }
@@ -340,7 +340,7 @@
   gap: var(--spacing-3);
   text-decoration: none;
   color: var(--color-text-primary);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .setup-step-item:hover {

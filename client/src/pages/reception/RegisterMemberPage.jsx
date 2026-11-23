@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   UserPlus,
   User,
-  Mail,
-  Phone,
   Shield,
   CreditCard,
   CheckCircle2,

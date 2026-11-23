@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import QRCode from 'qrcode';
 import {
-  QrCode,
   RefreshCw,
   Maximize2,
   Minimize2,
@@ -30,7 +29,7 @@ export default function GymQrDisplayPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   const containerRef = useRef(null);
   const timerRef = useRef(null);

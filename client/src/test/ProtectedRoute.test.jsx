@@ -11,7 +11,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // ---- Mock firebase/firestore before importing modules that use it ----
 vi.mock('firebase/firestore', () => ({

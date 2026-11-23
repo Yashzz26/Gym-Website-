@@ -180,6 +180,8 @@ describe('OnlineJoiningPage — Member Online Plan Selection (Day 11 Task 22)', 
       );
     });
 
+    expect(capturedOptions).toBeTruthy();
+    expect(capturedOptions.order_id).toBe('order_test_12345');
     expect(await screen.findByText(/payment captured at razorpay/i)).toBeInTheDocument();
     expect(screen.getByText('pay_test_98765')).toBeInTheDocument();
     expect(screen.getByText('order_test_12345')).toBeInTheDocument();

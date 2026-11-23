@@ -140,15 +140,6 @@ export default function MemberProfilePage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="member-profile-container" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-        <RefreshCw className="animate-spin" style={{ margin: '0 auto 1rem', color: '#0066ff' }} size={32} />
-        <p style={{ color: '#94a3b8' }}>Loading member profile & subscription details…</p>
-      </div>
-    );
-  }
-
   const { activeMembership, history } = membershipData;
   const isExpiringSoon =
     activeMembership &&
@@ -161,10 +152,21 @@ export default function MemberProfilePage() {
   if (activeMembership?.startDate && activeMembership?.endDate) {
     const start = new Date(activeMembership.startDate).getTime();
     const end = new Date(activeMembership.endDate).getTime();
-    const now = Date.now();
     const total = end - start;
-    const elapsed = Math.max(0, now - start);
-    progressPercent = total > 0 ? Math.min(100, Math.round((elapsed / total) * 100)) : 100;
+    if (total > 0 && activeMembership.daysRemaining !== undefined) {
+      const totalDays = Math.max(1, Math.round(total / (1000 * 60 * 60 * 24)));
+      const daysPassed = Math.max(0, totalDays - activeMembership.daysRemaining);
+      progressPercent = Math.min(100, Math.round((daysPassed / totalDays) * 100));
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="member-profile-container" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+        <RefreshCw className="animate-spin" style={{ margin: '0 auto 1rem', color: 'var(--color-accent)' }} size={32} />
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading member profile & subscription details…</p>
+      </div>
+    );
   }
 
   return (

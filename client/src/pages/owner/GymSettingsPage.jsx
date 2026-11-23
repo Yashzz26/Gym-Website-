@@ -3,7 +3,6 @@ import {
   Settings,
   Building2,
   Clock,
-  QrCode,
   Save,
   CheckCircle2,
   AlertCircle,
