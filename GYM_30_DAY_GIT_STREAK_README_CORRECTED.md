@@ -512,11 +512,11 @@ counts contribution days, not the number of commits as separate squares.
     -   Find members with active memberships and no attendance for at
         least seven days; exclude expired or ineligible accounts.
     -   Commit: `feat(members): detect inactive members`
--   [ ] **Task 46: Build owner inactive-members screen** \[M\]
+-   [x] **Task 46: Build owner inactive-members screen** \[M\]
     -   Display last visit and days absent, with search/filter and a
         clear follow-up action.
     -   Commit: `feat(owner): build inactive members screen`
--   [ ] Both planned commits pushed and visible on GitHub (Day 23).
+-   [x] Both planned commits pushed and visible on GitHub (Day 23).
 
 ### Day 24 --- Wednesday, 25 November 2026 --- Notifications foundation
 
@@ -683,9 +683,9 @@ counts contribution days, not the number of commits as separate squares.
 
         21 22 Nov       \[ \]       \[ \]       \[ \]            0           
 
-        22 23 Nov       \[ \]       \[ \]       \[ \]            0           
+        22 23 Nov       \[x\]       \[x\]       \[x\]            2           0715ffa, 3a5f304
 
-        23 24 Nov       \[ \]       \[ \]       \[ \]            0           
+        23 24 Nov       \[x\]       \[x\]       \[x\]            2           604f0fc
 
         24 25 Nov       \[ \]       \[ \]       \[ \]            0           
 

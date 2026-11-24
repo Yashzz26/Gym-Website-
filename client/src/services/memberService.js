@@ -49,3 +49,59 @@ export async function getMyMembership(token) {
   return body.data;
 }
 
+export async function getInactiveMembers(options = {}, token) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const daysInactive = options.daysInactive || 7;
+  const limit = options.limit || 50;
+  const query = new URLSearchParams({
+    daysInactive: String(daysInactive),
+    limit: String(limit),
+  }).toString();
+
+  const res = await fetch(`${API_BASE}/members/inactive?${query}`, {
+    headers,
+  });
+
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const error = new Error(body.message || 'Failed to fetch inactive members');
+    error.status = res.status;
+    throw error;
+  }
+
+  return {
+    members: body.data || [],
+    summary: body.summary || {},
+    total: body.total || 0,
+    daysInactiveThreshold: body.daysInactiveThreshold || daysInactive,
+  };
+}
+
+export async function recordFollowUp(memberId, followUpData = {}, token) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}/members/${memberId}/follow-up`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(followUpData),
+  });
+
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const error = new Error(body.message || 'Failed to record follow-up');
+    error.status = res.status;
+    throw error;
+  }
+
+  return body.data;
+}
+
