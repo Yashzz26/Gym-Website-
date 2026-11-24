@@ -508,7 +508,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 23 --- Tuesday, 24 November 2026 --- Inactive members
 
--   [ ] **Task 45: Create inactive-member detection API** \[M\]
+-   [x] **Task 45: Create inactive-member detection API** \[M\]
     -   Find members with active memberships and no attendance for at
         least seven days; exclude expired or ineligible accounts.
     -   Commit: `feat(members): detect inactive members`

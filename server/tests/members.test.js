@@ -30,6 +30,16 @@ function createMockFirestore() {
         approvalStatus: 'active',
       },
     ],
+    [
+      'owner-1',
+      {
+        uid: 'owner-1',
+        email: 'owner@gym.com',
+        displayName: 'Iron Owner',
+        role: 'owner',
+        approvalStatus: 'active',
+      },
+    ],
   ]);
 
   const plansStore = new Map([
@@ -56,9 +66,33 @@ function createMockFirestore() {
   ]);
 
   const membershipsStore = new Map();
+  const reminderLogsStore = new Map();
 
   return {
     collection(name) {
+      if (name === 'reminderLogs') {
+        return {
+          async add(data) {
+            const id = `rem-${reminderLogsStore.size + 1}`;
+            reminderLogsStore.set(id, { id, ...data });
+            return { id };
+          },
+          doc(id) {
+            return {
+              id,
+              async get() {
+                const exists = reminderLogsStore.has(id);
+                return {
+                  id,
+                  exists,
+                  data: () => (exists ? { ...reminderLogsStore.get(id) } : undefined),
+                };
+              },
+            };
+          },
+        };
+      }
+
       if (name === 'users') {
         return {
           doc(id) {
@@ -109,6 +143,19 @@ function createMockFirestore() {
             membershipsStore.set(id, { id, ...data });
             return { id };
           },
+          doc(id) {
+            return {
+              id,
+              async get() {
+                const exists = membershipsStore.has(id);
+                return {
+                  id,
+                  exists,
+                  data: () => (exists ? { ...membershipsStore.get(id) } : undefined),
+                };
+              },
+            };
+          },
           where(field, op, val) {
             return {
               async get() {
@@ -123,6 +170,7 @@ function createMockFirestore() {
                   forEach(cb) {
                     matches.forEach(cb);
                   },
+                  docs: matches,
                 };
               },
             };
@@ -132,7 +180,7 @@ function createMockFirestore() {
 
       throw new Error(`Unexpected collection: ${name}`);
     },
-    _stores: { usersStore, membershipsStore },
+    _stores: { usersStore, membershipsStore, reminderLogsStore },
   };
 }
 
@@ -152,6 +200,14 @@ describe('Member Online Joining & Plan Selection API (Day 11 Task 22)', () => {
         return next(new UnauthorizedError('Authentication required'));
       }
       req.user = { uid: activeUser.uid, email: activeUser.email };
+      if (activeUser.role) {
+        req.profile = {
+          role: activeUser.role,
+          approvalStatus: activeUser.approvalStatus || 'active',
+          displayName: activeUser.displayName || 'Test User',
+          email: activeUser.email,
+        };
+      }
       next();
     };
 
@@ -258,6 +314,250 @@ describe('Member Online Joining & Plan Selection API (Day 11 Task 22)', () => {
     assert.ok(body.data);
     assert.equal(body.data.status, 'payment_pending');
     assert.equal(body.data.planName, '3 Months Pro');
+  });
+
+  /* ------------------------------------------------------------------------ */
+  /* Inactive Members Detection & Retention Follow-up (Day 23 Task 45)         */
+  /* ------------------------------------------------------------------------ */
+
+  describe('Inactive Members Detection & Follow-up API', () => {
+    const now = new Date();
+    const daysAgo = (d) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000).toISOString();
+    const daysFromNow = (d) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000).toISOString();
+
+    before(() => {
+      const users = mockDb._stores.usersStore;
+      const mems = mockDb._stores.membershipsStore;
+
+      // 1. Recent attendee: checked in 2 days ago
+      users.set('usr-recent', {
+        uid: 'usr-recent',
+        email: 'recent@gym.com',
+        displayName: 'Recent Member',
+        role: 'member',
+        approvalStatus: 'active',
+        lastCheckIn: daysAgo(2),
+        lastCheckInDate: daysAgo(2).split('T')[0],
+      });
+      mems.set('mem-recent', {
+        membershipId: 'mem-recent',
+        userId: 'usr-recent',
+        planName: '12 Months Pro',
+        status: 'active',
+        startDate: daysAgo(60),
+        endDate: daysFromNow(60),
+      });
+
+      // 2. Inactive 14 days
+      users.set('usr-inactive-14', {
+        uid: 'usr-inactive-14',
+        email: 'absent14@gym.com',
+        displayName: 'Absent Two Weeks',
+        phone: '+91 98765 14141',
+        role: 'member',
+        approvalStatus: 'active',
+        lastCheckIn: daysAgo(14),
+        lastCheckInDate: daysAgo(14).split('T')[0],
+      });
+      mems.set('mem-inactive-14', {
+        membershipId: 'mem-inactive-14',
+        userId: 'usr-inactive-14',
+        planName: '3 Months Regular',
+        status: 'active',
+        startDate: daysAgo(40),
+        endDate: daysFromNow(50),
+      });
+
+      // 3. Inactive 25 days (Critical churn risk)
+      users.set('usr-inactive-25', {
+        uid: 'usr-inactive-25',
+        email: 'absent25@gym.com',
+        displayName: 'Absent Critical',
+        phone: '+91 98765 25252',
+        role: 'member',
+        approvalStatus: 'active',
+        lastCheckIn: daysAgo(25),
+        lastCheckInDate: daysAgo(25).split('T')[0],
+      });
+      mems.set('mem-inactive-25', {
+        membershipId: 'mem-inactive-25',
+        userId: 'usr-inactive-25',
+        planName: 'Annual Gold',
+        status: 'active',
+        startDate: daysAgo(80),
+        endDate: daysFromNow(40),
+      });
+
+      // 4. Never attended member (joined 10 days ago, zero check-ins)
+      users.set('usr-never-attended', {
+        uid: 'usr-never-attended',
+        email: 'never@gym.com',
+        displayName: 'New Non-Attendee',
+        phone: '+91 98765 00000',
+        role: 'member',
+        approvalStatus: 'active',
+        createdAt: daysAgo(10),
+      });
+      mems.set('mem-never-attended', {
+        membershipId: 'mem-never-attended',
+        userId: 'usr-never-attended',
+        planName: '1 Month Starter',
+        status: 'active',
+        startDate: daysAgo(10),
+        endDate: daysFromNow(20),
+      });
+
+      // 5. Expired membership (checked in 20 days ago, but membership expired 3 days ago)
+      users.set('usr-expired', {
+        uid: 'usr-expired',
+        email: 'expired@gym.com',
+        displayName: 'Expired Account',
+        role: 'member',
+        approvalStatus: 'active',
+        lastCheckIn: daysAgo(20),
+      });
+      mems.set('mem-expired', {
+        membershipId: 'mem-expired',
+        userId: 'usr-expired',
+        planName: '1 Month Promo',
+        status: 'active',
+        startDate: daysAgo(33),
+        endDate: daysAgo(3), // expired
+      });
+
+      // 6. Suspended user account (has active membership, but approvalStatus: 'suspended')
+      users.set('usr-suspended', {
+        uid: 'usr-suspended',
+        email: 'suspended@gym.com',
+        displayName: 'Suspended Member',
+        role: 'member',
+        approvalStatus: 'suspended',
+        lastCheckIn: daysAgo(20),
+      });
+      mems.set('mem-suspended', {
+        membershipId: 'mem-suspended',
+        userId: 'usr-suspended',
+        planName: '3 Months Regular',
+        status: 'active',
+        startDate: daysAgo(30),
+        endDate: daysFromNow(60),
+      });
+    });
+
+    test('GET /api/members/inactive returns 401 when unauthenticated', async () => {
+      activeUser = null;
+      const res = await fetch(`${baseUrl}/api/members/inactive`);
+      assert.equal(res.status, 401);
+    });
+
+    test('GET /api/members/inactive returns 403 when called by member role', async () => {
+      activeUser = { uid: 'member-1', email: 'member@gym.com', role: 'member' };
+      const res = await fetch(`${baseUrl}/api/members/inactive`);
+      assert.equal(res.status, 403);
+    });
+
+    test('GET /api/members/inactive returns 200 with inactive members list for owner', async () => {
+      activeUser = { uid: 'owner-1', email: 'owner@gym.com', role: 'owner' };
+      const res = await fetch(`${baseUrl}/api/members/inactive`);
+      assert.equal(res.status, 200);
+
+      const body = await res.json();
+      assert.equal(body.status, 'success');
+      assert.ok(Array.isArray(body.data));
+      assert.ok(body.summary);
+      assert.equal(body.daysInactiveThreshold, 7);
+
+      // Verify members present
+      const memberIds = body.data.map((m) => m.userId);
+      assert.ok(memberIds.includes('usr-inactive-25'));
+      assert.ok(memberIds.includes('usr-inactive-14'));
+      assert.ok(memberIds.includes('usr-never-attended'));
+
+      // Verify sorted chronologically descending by daysAbsent (most absent first)
+      assert.equal(body.data[0].userId, 'usr-inactive-25');
+      assert.ok(body.data[0].daysAbsent >= 24);
+      assert.equal(body.data[0].urgency, 'critical');
+
+      // Verify never attended record
+      const neverMember = body.data.find((m) => m.userId === 'usr-never-attended');
+      assert.ok(neverMember);
+      assert.equal(neverMember.neverAttended, true);
+      assert.ok(neverMember.daysAbsent >= 9);
+
+      // Verify summary counters
+      assert.equal(body.summary.totalInactive, 3);
+      assert.equal(body.summary.criticalCount, 1);
+      assert.equal(body.summary.urgentCount, 1);
+      assert.equal(body.summary.moderateCount, 1);
+      assert.equal(body.summary.neverAttendedCount, 1);
+    });
+
+    test('GET /api/members/inactive correctly excludes recent attendees, expired memberships, and suspended accounts', async () => {
+      activeUser = { uid: 'owner-1', email: 'owner@gym.com', role: 'owner' };
+      const res = await fetch(`${baseUrl}/api/members/inactive`);
+      const body = await res.json();
+      const memberIds = body.data.map((m) => m.userId);
+
+      // Recent attendee (< 7 days) must not be included
+      assert.equal(memberIds.includes('usr-recent'), false);
+      // Expired membership must not be included
+      assert.equal(memberIds.includes('usr-expired'), false);
+      // Suspended account must not be included
+      assert.equal(memberIds.includes('usr-suspended'), false);
+    });
+
+    test('GET /api/members/inactive supports daysInactive query parameter filtering', async () => {
+      activeUser = { uid: 'owner-1', email: 'owner@gym.com', role: 'owner' };
+      // Filter for members absent for at least 20 days
+      const res = await fetch(`${baseUrl}/api/members/inactive?daysInactive=20`);
+      assert.equal(res.status, 200);
+
+      const body = await res.json();
+      assert.equal(body.daysInactiveThreshold, 20);
+      assert.equal(body.data.length, 1);
+      assert.equal(body.data[0].userId, 'usr-inactive-25');
+    });
+
+    test('POST /api/members/:id/follow-up successfully records outreach log and updates user profile', async () => {
+      activeUser = { uid: 'owner-1', email: 'owner@gym.com', role: 'owner' };
+      const res = await fetch(`${baseUrl}/api/members/usr-inactive-14/follow-up`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: 'whatsapp',
+          notes: 'Sent personalized comeback discount coupon',
+          outcome: 'delivered',
+        }),
+      });
+
+      assert.equal(res.status, 201);
+      const body = await res.json();
+      assert.equal(body.status, 'success');
+      assert.equal(body.data.memberId, 'usr-inactive-14');
+      assert.equal(body.data.channel, 'whatsapp');
+      assert.equal(body.data.notes, 'Sent personalized comeback discount coupon');
+      assert.equal(body.data.sentBy, 'owner-1');
+
+      // Verify user document has updated lastFollowUp summary
+      const updatedUser = mockDb._stores.usersStore.get('usr-inactive-14');
+      assert.ok(updatedUser.lastFollowUp);
+      assert.equal(updatedUser.lastFollowUp.channel, 'whatsapp');
+      assert.equal(updatedUser.lastFollowUp.notes, 'Sent personalized comeback discount coupon');
+    });
+
+    test('POST /api/members/:id/follow-up returns 404 when target member does not exist', async () => {
+      activeUser = { uid: 'owner-1', email: 'owner@gym.com', role: 'owner' };
+      const res = await fetch(`${baseUrl}/api/members/non-existent-user/follow-up`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: 'call',
+          notes: 'Attempted phone call',
+        }),
+      });
+
+      assert.equal(res.status, 404);
+    });
   });
 });
 
