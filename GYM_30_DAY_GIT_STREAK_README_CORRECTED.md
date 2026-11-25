@@ -524,7 +524,7 @@ counts contribution days, not the number of commits as separate squares.
     -   Create notification records and APIs for listing, marking read
         and role-appropriate delivery.
     -   Commit: `feat(notifications): add in-app notification service`
--   [ ] **Task 48: Create WhatsApp Cloud API service foundation** \[M\]
+-   [x] **Task 48: Create WhatsApp Cloud API service foundation** \[M\]
     -   Add server-side configuration, message template service and
         webhook verification structure. Use test credentials only
         through environment variables. Include template submission
@@ -532,7 +532,7 @@ counts contribution days, not the number of commits as separate squares.
         purpose, variables, language and approval status for each
         proposed template.
     -   Commit: `feat(whatsapp): add Cloud API service foundation`
--   [ ] Both planned commits pushed and visible on GitHub (Day 24).
+-   [x] Both planned commits pushed and visible on GitHub (Day 24).
 
 ### Day 25 --- Thursday, 26 November 2026 --- WhatsApp automation
 
@@ -685,9 +685,9 @@ counts contribution days, not the number of commits as separate squares.
 
         22 23 Nov       \[x\]       \[x\]       \[x\]            2           0715ffa, 3a5f304
 
-        23 24 Nov       \[x\]       \[x\]       \[x\]            2           604f0fc
+        23 24 Nov       \[x\]       \[x\]       \[x\]            2           604f0fc, 5ef2102
 
-        24 25 Nov       \[ \]       \[ \]       \[ \]            0           
+        24 25 Nov       \[x\]       \[x\]       \[x\]            2           b3a3957
 
         25 26 Nov       \[ \]       \[ \]       \[ \]            0           
 
