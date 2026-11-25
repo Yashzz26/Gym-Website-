@@ -520,7 +520,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 24 --- Wednesday, 25 November 2026 --- Notifications foundation
 
--   [ ] **Task 47: Create in-app notification service** \[M\]
+-   [x] **Task 47: Create in-app notification service** \[M\]
     -   Create notification records and APIs for listing, marking read
         and role-appropriate delivery.
     -   Commit: `feat(notifications): add in-app notification service`

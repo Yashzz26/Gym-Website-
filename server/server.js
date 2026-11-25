@@ -37,6 +37,7 @@ import attendanceRouter from './routes/attendance.js';
 import trainersRouter from './routes/trainers.js';
 import workoutsRouter from './routes/workouts.js';
 import dietRouter from './routes/diet.js';
+import notificationsRouter from './routes/notifications.js';
 import paymentController from './controllers/paymentController.js';
 
 // ---------------------------------------------------------------------------
@@ -81,6 +82,7 @@ export const createApp = () => {
   app.use('/api/trainers', trainersRouter);
   app.use('/api/workouts', workoutsRouter);
   app.use('/api/diet', dietRouter);
+  app.use('/api/notifications', notificationsRouter);
 
   // Direct Standard Checkout endpoints (/api/create-order and /api/verify-payment)
   app.post('/api/create-order', paymentController.createDirectOrder);
