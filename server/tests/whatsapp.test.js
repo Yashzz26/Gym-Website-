@@ -33,11 +33,32 @@ function createMockDb() {
       {
         waMessageId: 'wamid.HBgMOTE5ODc2NTQzMjEwFQIAERgSNjM5',
         status: 'sent',
-        recipientId: '919876543210',
+        recipientPhone: '919876543210',
+        createdAt: new Date().toISOString(),
       },
     ],
   ]);
   const reminderLogs = new Map();
+  const users = new Map([
+    [
+      'user-active-optin',
+      {
+        id: 'user-active-optin',
+        displayName: 'Rahul Sharma',
+        phone: '919876543210',
+        whatsappOptIn: true,
+      },
+    ],
+    [
+      'user-opted-out',
+      {
+        id: 'user-opted-out',
+        displayName: 'Pooja Verma',
+        phone: '919876543299',
+        whatsappOptIn: false,
+      },
+    ],
+  ]);
 
   const makeCollection = (store) => ({
     where(field, op, val) {
@@ -54,12 +75,28 @@ function createMockDb() {
       };
     },
     doc(id) {
+      const docId = id || `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       return {
-        id,
+        id: docId,
+        async get() {
+          if (!store.has(docId)) return { exists: false, data: () => null };
+          return { exists: true, data: () => ({ ...store.get(docId) }) };
+        },
+        async set(data) {
+          store.set(docId, { ...data });
+        },
         async update(updates) {
-          store.set(id, { ...store.get(id), ...updates });
+          const current = store.get(docId) || {};
+          store.set(docId, { ...current, ...updates });
         },
       };
+    },
+    async get() {
+      const matches = [];
+      for (const [id, item] of store.entries()) {
+        matches.push({ id, data: () => ({ ...item }) });
+      }
+      return { empty: matches.length === 0, docs: matches };
     },
   });
 
@@ -67,9 +104,10 @@ function createMockDb() {
     collection(name) {
       if (name === 'whatsappLogs') return makeCollection(whatsappLogs);
       if (name === 'reminderLogs') return makeCollection(reminderLogs);
+      if (name === 'users') return makeCollection(users);
       throw new Error(`Unexpected collection: ${name}`);
     },
-    _stores: { whatsappLogs, reminderLogs },
+    _stores: { whatsappLogs, reminderLogs, users },
   };
 }
 
@@ -351,5 +389,184 @@ describe('WhatsApp Cloud API Configuration & Foundation (Day 24 Task 48)', () =>
     assert.equal(body.data.processedStatuses, 1);
     assert.equal(body.data.updatedLogs, 1);
     assert.equal(mockDb._stores.whatsappLogs.get('wa-log-1').status, 'delivered');
+  });
+
+  test('POST /api/whatsapp/send enforces auth and role guards', async () => {
+    // 1. Unauthenticated -> 401
+    activeUser = null;
+    const unauthRes = await fetch(`${baseUrl}/api/whatsapp/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '919876543210',
+        templateName: 'ironcore_gym_welcome',
+        variables: ['Rahul Sharma', 'IRONCORE Fitness', '1 Month Starter'],
+      }),
+    });
+    assert.equal(unauthRes.status, 401);
+
+    // 2. Member role -> 403
+    activeUser = { uid: 'mem-1', role: 'member', email: 'member@test.com' };
+    const forbiddenRes = await fetch(`${baseUrl}/api/whatsapp/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '919876543210',
+        templateName: 'ironcore_gym_welcome',
+        variables: ['Rahul Sharma', 'IRONCORE Fitness', '1 Month Starter'],
+      }),
+    });
+    assert.equal(forbiddenRes.status, 403);
+  });
+
+  test('POST /api/whatsapp/send dispatches template and creates delivery log', async () => {
+    activeUser = { uid: 'owner-1', role: 'owner', email: 'owner@test.com' };
+    const res = await fetch(`${baseUrl}/api/whatsapp/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '919876543210',
+        templateName: 'ironcore_gym_welcome',
+        languageCode: 'en_US',
+        variables: ['Rahul Sharma', 'IRONCORE Fitness', '3 Months Pro'],
+        memberId: 'user-active-optin',
+        metadata: { membershipId: 'mem-101' },
+      }),
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, 'success');
+    assert.equal(body.data.success, true);
+    assert.equal(body.data.status, 'sent');
+    assert.ok(body.data.waMessageId.startsWith('wamid.MOCK_'));
+
+    // Check delivery log exists in mockDb
+    const logDoc = mockDb._stores.whatsappLogs.get(body.data.logId);
+    assert.ok(logDoc, 'Delivery log must be persisted in whatsappLogs');
+    assert.equal(logDoc.recipientPhone, '919876543210');
+    assert.equal(logDoc.templateName, 'ironcore_gym_welcome');
+    assert.equal(logDoc.status, 'sent');
+  });
+
+  test('POST /api/whatsapp/send respects user opt-out and does not dispatch', async () => {
+    activeUser = { uid: 'reception-1', role: 'reception', email: 'reception@test.com' };
+    const res = await fetch(`${baseUrl}/api/whatsapp/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '919876543299',
+        templateName: 'ironcore_renewal_reminder_3days',
+        variables: ['Pooja Verma', '1 Month Starter', 'IRONCORE', '3', '2026-12-01'],
+        memberId: 'user-opted-out',
+      }),
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, 'opted_out');
+    assert.equal(body.data.success, false);
+    assert.equal(body.data.status, 'opted_out');
+
+    // Confirm opted_out record was saved
+    const logDoc = mockDb._stores.whatsappLogs.get(body.data.logId);
+    assert.ok(logDoc);
+    assert.equal(logDoc.status, 'opted_out');
+    assert.equal(logDoc.waMessageId, null);
+  });
+
+  test('POST /api/whatsapp/send rejects invalid variables or unregistered template', async () => {
+    activeUser = { uid: 'owner-1', role: 'owner', email: 'owner@test.com' };
+
+    // Mismatched variable count
+    const varRes = await fetch(`${baseUrl}/api/whatsapp/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '919876543210',
+        templateName: 'ironcore_gym_welcome',
+        variables: ['OnlyOneVar'], // requires 3
+      }),
+    });
+    assert.equal(varRes.status, 400);
+
+    // Non-existent template
+    const tmplRes = await fetch(`${baseUrl}/api/whatsapp/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: '919876543210',
+        templateName: 'invalid_template_name',
+        variables: [],
+      }),
+    });
+    assert.equal(tmplRes.status, 404);
+  });
+
+  test('GET /api/whatsapp/logs returns delivery history with filtering', async () => {
+    activeUser = { uid: 'owner-1', role: 'owner', email: 'owner@test.com' };
+    const res = await fetch(`${baseUrl}/api/whatsapp/logs?limit=10`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, 'success');
+    assert.ok(Array.isArray(body.data));
+    assert.ok(body.data.length >= 1);
+  });
+
+  test('PATCH /api/whatsapp/opt-status/:userId updates member opt preferences', async () => {
+    activeUser = { uid: 'reception-1', role: 'reception', email: 'reception@test.com' };
+    const res = await fetch(`${baseUrl}/api/whatsapp/opt-status/user-opted-out`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ optIn: true }),
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, 'success');
+    assert.equal(body.data.whatsappOptIn, true);
+    assert.equal(mockDb._stores.users.get('user-opted-out').whatsappOptIn, true);
+  });
+
+  test('Inbound webhook STOP keyword automatically flags user as opted out', async () => {
+    const rawBody = JSON.stringify({
+      object: 'whatsapp_business_account',
+      entry: [
+        {
+          id: 'WABA_ENTRY_1',
+          changes: [
+            {
+              value: {
+                messaging_product: 'whatsapp',
+                messages: [
+                  {
+                    id: 'wamid.INBOUND_MSG_STOP_1',
+                    from: '919876543210',
+                    type: 'text',
+                    text: { body: 'STOP' },
+                    timestamp: String(Math.floor(Date.now() / 1000)),
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const validHmac = crypto
+      .createHmac('sha256', TEST_APP_SECRET)
+      .update(rawBody)
+      .digest('hex');
+
+    const res = await fetch(`${baseUrl}/api/whatsapp/webhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Hub-Signature-256': `sha256=${validHmac}`,
+      },
+      body: rawBody,
+    });
+    assert.equal(res.status, 200);
+    assert.equal(mockDb._stores.users.get('user-active-optin').whatsappOptIn, false);
   });
 });

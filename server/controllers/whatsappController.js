@@ -43,6 +43,51 @@ export const createWhatsAppController = (service = defaultService) => {
       }
     },
 
+    async sendMessage(req, res, next) {
+      try {
+        const actorId = req.user?.uid || null;
+        const result = await service.sendTemplateMessage({
+          ...req.body,
+          actorId,
+        });
+
+        const statusCode = result.success ? 200 : result.status === 'opted_out' ? 200 : 400;
+        res.status(statusCode).json({
+          status: result.success ? 'success' : result.status === 'opted_out' ? 'opted_out' : 'fail',
+          data: result,
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    async getDeliveryLogs(req, res, next) {
+      try {
+        const logs = await service.getDeliveryLogs(req.query || {});
+        res.status(200).json({
+          status: 'success',
+          results: logs.length,
+          data: logs,
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    async updateOptStatus(req, res, next) {
+      try {
+        const { userId } = req.params;
+        const { optIn } = req.body;
+        const result = await service.updateMemberOptStatus(userId, optIn);
+        res.status(200).json({
+          status: 'success',
+          data: result,
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+
     async verifyWebhook(req, res, next) {
       try {
         const mode = req.query['hub.mode'];

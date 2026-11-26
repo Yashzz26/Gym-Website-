@@ -14,6 +14,9 @@ import { db as defaultDb } from '../config/firebase.js';
 import {
   getWhatsAppConfig,
   getSanitizedWhatsAppStatus,
+  isWhatsAppConfigured,
+  isWhatsAppMockMode,
+  getGraphApiMessagesUrl,
 } from '../config/whatsapp.js';
 import {
   BadRequestError,
@@ -100,6 +103,8 @@ export const createWhatsAppService = ({
   customDb = defaultDb,
   configGetter = getWhatsAppConfig,
 } = {}) => {
+  const templateOverrides = new Map();
+
   const getLogsCollection = () => {
     if (!customDb) throw new Error('[WhatsAppService] Firestore DB is not initialized');
     return customDb.collection('whatsappLogs');
@@ -110,7 +115,23 @@ export const createWhatsAppService = ({
     return customDb.collection('reminderLogs');
   };
 
+  const getUsersCollection = () => {
+    if (!customDb) throw new Error('[WhatsAppService] Firestore DB is not initialized');
+    return customDb.collection('users');
+  };
+
   return {
+    /**
+     * Override or update approval status for a template (e.g. for testing or when Meta approves).
+     */
+    setTemplateApprovalStatus(templateName, approvalStatus) {
+      if (!WHATSAPP_TEMPLATES[templateName]) {
+        throw new NotFoundError(`WhatsApp template '${templateName}' is not registered`);
+      }
+      templateOverrides.set(templateName, approvalStatus);
+      return this.getTemplateDefinition(templateName);
+    },
+
     /**
      * Return safe diagnostic status (no credentials) plus template summary.
      */
@@ -132,7 +153,13 @@ export const createWhatsAppService = ({
      * List all registered Meta WhatsApp templates with purpose, variables, languages, and status.
      */
     listTemplates() {
-      return Object.values(WHATSAPP_TEMPLATES).map((tmpl) => ({ ...tmpl }));
+      return Object.values(WHATSAPP_TEMPLATES).map((tmpl) => {
+        const override = templateOverrides.get(tmpl.name);
+        return {
+          ...tmpl,
+          approvalStatus: override || tmpl.approvalStatus,
+        };
+      });
     },
 
     /**
@@ -143,7 +170,11 @@ export const createWhatsAppService = ({
       if (!template) {
         throw new NotFoundError(`WhatsApp template '${templateName}' is not registered`);
       }
-      return { ...template };
+      const override = templateOverrides.get(templateName);
+      return {
+        ...template,
+        approvalStatus: override || template.approvalStatus,
+      };
     },
 
     /**
@@ -334,6 +365,301 @@ export const createWhatsAppService = ({
     },
 
     /**
+     * Check if a recipient phone or memberId has opted out of WhatsApp messages.
+     */
+    async isRecipientOptedOut(phone, memberId = null) {
+      if (!customDb) return false;
+      try {
+        const usersCol = getUsersCollection();
+        if (memberId) {
+          const userDoc = await usersCol.doc(memberId).get();
+          if (userDoc?.exists) {
+            const data = userDoc.data();
+            if (data?.whatsappOptIn === false) {
+              return true;
+            }
+          }
+        }
+        if (phone) {
+          const formatted = this.formatPhoneE164(phone);
+          const snap = await usersCol.where('phone', '==', phone).get();
+          if (snap && !snap.empty) {
+            for (const doc of snap.docs) {
+              if (doc.data()?.whatsappOptIn === false) {
+                return true;
+              }
+            }
+          }
+          const snapFormatted = await usersCol.where('phone', '==', formatted).get();
+          if (snapFormatted && !snapFormatted.empty) {
+            for (const doc of snapFormatted.docs) {
+              if (doc.data()?.whatsappOptIn === false) {
+                return true;
+              }
+            }
+          }
+        }
+      } catch {
+        // Resilient check
+      }
+      return false;
+    },
+
+    /**
+     * Explicitly update a member's WhatsApp opt-in status.
+     */
+    async updateMemberOptStatus(userId, optIn) {
+      if (!userId) throw new BadRequestError('User ID is required');
+      const usersCol = getUsersCollection();
+      const docRef = usersCol.doc(userId);
+      const snap = await docRef.get();
+      if (!snap || !snap.exists) {
+        throw new NotFoundError(`User '${userId}' not found`);
+      }
+      const now = new Date().toISOString();
+      await docRef.update({
+        whatsappOptIn: Boolean(optIn),
+        whatsappOptUpdatedAt: now,
+        updatedAt: now,
+      });
+      return {
+        userId,
+        whatsappOptIn: Boolean(optIn),
+        updatedAt: now,
+      };
+    },
+
+    /**
+     * Send an approved Meta WhatsApp Business template message and record delivery log.
+     */
+    async sendTemplateMessage({
+      to,
+      templateName,
+      languageCode = 'en_US',
+      variables = [],
+      buttonParams = [],
+      memberId = null,
+      triggerType = 'manual',
+      metadata = {},
+      allowPendingInSandbox = true,
+      actorId = null,
+    }) {
+      const config = configGetter();
+      const template = this.getTemplateDefinition(templateName);
+      const formattedTo = this.formatPhoneE164(to);
+      const payload = this.buildTemplatePayload({
+        to: formattedTo,
+        templateName,
+        languageCode,
+        variables,
+        buttonParams,
+      });
+
+      const logDocRef = getLogsCollection().doc();
+      const logId = logDocRef.id;
+      const now = new Date().toISOString();
+
+      // 1. Check member opt-out status
+      const isOptedOut = await this.isRecipientOptedOut(formattedTo, memberId);
+      if (isOptedOut) {
+        const optOutRecord = {
+          id: logId,
+          waMessageId: null,
+          recipientPhone: formattedTo,
+          memberId: memberId || null,
+          templateName,
+          languageCode,
+          variables,
+          status: 'opted_out',
+          triggerType,
+          failureReason: 'Recipient has opted out of WhatsApp messages',
+          metadata: { ...metadata, optedOut: true },
+          sentAt: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await logDocRef.set(optOutRecord);
+        return {
+          success: false,
+          status: 'opted_out',
+          logId,
+          recipientPhone: formattedTo,
+          message: 'Recipient has opted out of WhatsApp notifications',
+        };
+      }
+
+      // 2. Check Meta template approval status
+      const mockMode = isWhatsAppMockMode(config);
+      if (!mockMode && template.approvalStatus !== 'APPROVED') {
+        throw new BadRequestError(
+          `Template '${templateName}' has status '${template.approvalStatus}' and cannot be sent via live Meta Cloud API until approved by Meta`
+        );
+      }
+
+      let waMessageId = null;
+      let status = 'sent';
+      let errorDetails = null;
+
+      // 3. Dispatch to Meta Cloud API or simulated dispatcher
+      if (!mockMode && isWhatsAppConfigured(config)) {
+        try {
+          const url = getGraphApiMessagesUrl(config);
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${config.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            status = 'failed';
+            errorDetails = data.error || { message: `Meta API returned HTTP ${res.status}` };
+          } else {
+            waMessageId = data.messages?.[0]?.id || null;
+            status = 'sent';
+          }
+        } catch (err) {
+          status = 'failed';
+          errorDetails = { message: err.message || 'Network error reaching Meta Cloud API' };
+        }
+      } else {
+        // Simulated sandbox dispatch
+        waMessageId = `wamid.MOCK_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        status = 'sent';
+      }
+
+      // 4. Record structured delivery log in whatsappLogs
+      const deliveryRecord = {
+        id: logId,
+        waMessageId,
+        recipientPhone: formattedTo,
+        memberId: memberId || null,
+        templateName,
+        languageCode,
+        variables,
+        buttonParams,
+        status,
+        triggerType,
+        mockMode,
+        actorId: actorId || null,
+        error: errorDetails,
+        metadata,
+        sentAt: status === 'sent' ? now : null,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await logDocRef.set(deliveryRecord);
+
+      if (status === 'failed') {
+        return {
+          success: false,
+          status: 'failed',
+          logId,
+          error: errorDetails,
+          message: errorDetails?.message || 'Failed to dispatch WhatsApp message',
+        };
+      }
+
+      return {
+        success: true,
+        status: 'sent',
+        waMessageId,
+        logId,
+        recipientPhone: formattedTo,
+        templateName,
+        mockMode,
+      };
+    },
+
+    /**
+     * Retrieve delivery logs with filtering and pagination.
+     */
+    async getDeliveryLogs({
+      recipientPhone,
+      templateName,
+      status,
+      memberId,
+      limit = 50,
+    } = {}) {
+      const logsCol = getLogsCollection();
+      let query = logsCol;
+
+      if (templateName) {
+        query = query.where('templateName', '==', templateName);
+      }
+      if (status) {
+        query = query.where('status', '==', status);
+      }
+      if (memberId) {
+        query = query.where('memberId', '==', memberId);
+      }
+      if (recipientPhone) {
+        const normalized = this.formatPhoneE164(recipientPhone);
+        query = query.where('recipientPhone', '==', normalized);
+      }
+
+      const snap = await query.get();
+      const logs = [];
+      if (snap && !snap.empty) {
+        for (const doc of snap.docs) {
+          logs.push({ id: doc.id, ...doc.data() });
+        }
+      }
+
+      logs.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return logs.slice(0, Number(limit) || 50);
+    },
+
+    /**
+     * Handle inbound keyword-based opt-out / opt-in (e.g. STOP, START).
+     */
+    async _handleInboundOptKeyword(phone, optIn, waMessageId) {
+      if (!customDb || !phone) return;
+      try {
+        const formatted = this.formatPhoneE164(phone);
+        const usersCol = getUsersCollection();
+        let matchedDocs = [];
+
+        const snap1 = await usersCol.where('phone', '==', phone).get();
+        if (snap1 && !snap1.empty) matchedDocs.push(...snap1.docs);
+
+        const snap2 = await usersCol.where('phone', '==', formatted).get();
+        if (snap2 && !snap2.empty) {
+          for (const d of snap2.docs) {
+            if (!matchedDocs.some((m) => m.id === d.id)) matchedDocs.push(d);
+          }
+        }
+
+        const now = new Date().toISOString();
+        for (const userDoc of matchedDocs) {
+          await usersCol.doc(userDoc.id).update({
+            whatsappOptIn: Boolean(optIn),
+            whatsappOptUpdatedAt: now,
+            updatedAt: now,
+          });
+        }
+
+        const logDoc = getLogsCollection().doc();
+        await logDoc.set({
+          id: logDoc.id,
+          waMessageId: waMessageId || null,
+          recipientPhone: formatted,
+          status: optIn ? 'opt_in_updated' : 'opted_out',
+          action: optIn ? 'user_opt_in' : 'user_opt_out',
+          matchedUsersCount: matchedDocs.length,
+          createdAt: now,
+          updatedAt: now,
+        });
+      } catch (err) {
+        console.warn('[WhatsAppService] Failed to process inbound opt keyword:', err.message);
+      }
+    },
+
+    /**
      * Process parsed webhook status updates against whatsappLogs / reminderLogs.
      */
     async processWebhookPayload(payload) {
@@ -359,6 +685,20 @@ export const createWhatsAppService = ({
             }
           } catch {
             // Resilient log collection lookup in case collection doesn't exist yet
+          }
+        }
+      }
+
+      // Handle inbound keywords for automated opt-out / opt-in compliance
+      for (const msg of messages) {
+        const text = String(msg.text || '').trim().toUpperCase();
+        if (['STOP', 'UNSUBSCRIBE', 'CANCEL', 'QUIT', 'OPTOUT'].includes(text)) {
+          if (msg.from) {
+            await this._handleInboundOptKeyword(msg.from, false, msg.waMessageId);
+          }
+        } else if (['START', 'UNSTOP', 'OPTIN', 'RESUME'].includes(text)) {
+          if (msg.from) {
+            await this._handleInboundOptKeyword(msg.from, true, msg.waMessageId);
           }
         }
       }

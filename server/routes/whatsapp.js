@@ -9,7 +9,12 @@ import {
   requireActiveStatus as defaultRequireActiveStatus,
 } from '../middleware/rbac.js';
 import { validate } from '../middleware/validate.js';
-import { previewTemplateSchema } from '../schemas/whatsapp.js';
+import {
+  previewTemplateSchema,
+  sendTemplateSchema,
+  deliveryLogsQuerySchema,
+  updateOptStatusSchema,
+} from '../schemas/whatsapp.js';
 import { whatsappController as defaultController } from '../controllers/whatsappController.js';
 
 export const createWhatsAppRouter = ({
@@ -31,6 +36,32 @@ export const createWhatsAppRouter = ({
     requireActiveStatus,
     validate({ body: previewTemplateSchema }),
     controller.previewTemplatePayload
+  );
+
+  // Template dispatch & delivery log endpoints (Day 25 Task 49)
+  router.post(
+    '/send',
+    verifyToken,
+    allowStaff,
+    requireActiveStatus,
+    validate({ body: sendTemplateSchema }),
+    controller.sendMessage
+  );
+  router.get(
+    '/logs',
+    verifyToken,
+    allowStaff,
+    requireActiveStatus,
+    validate({ query: deliveryLogsQuerySchema }),
+    controller.getDeliveryLogs
+  );
+  router.patch(
+    '/opt-status/:userId',
+    verifyToken,
+    allowStaff,
+    requireActiveStatus,
+    validate({ body: updateOptStatusSchema }),
+    controller.updateOptStatus
   );
 
   // Public Meta Webhook endpoints (Challenge verification + HMAC-SHA256 verified callbacks)

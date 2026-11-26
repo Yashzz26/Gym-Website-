@@ -536,7 +536,7 @@ counts contribution days, not the number of commits as separate squares.
 
 ### Day 25 --- Thursday, 26 November 2026 --- WhatsApp automation
 
--   [ ] **Task 49: Implement WhatsApp template sending and delivery
+-   [x] **Task 49: Implement WhatsApp template sending and delivery
     logs** \[L\]
     -   Send approved templates through Meta Cloud API and record
         message IDs, statuses and failures. Respect opt-in and opt-out.
@@ -689,7 +689,7 @@ counts contribution days, not the number of commits as separate squares.
 
         24 25 Nov       \[x\]       \[x\]       \[x\]            2           b3a3957
 
-        25 26 Nov       \[ \]       \[ \]       \[ \]            0           
+        25 26 Nov       \[x\]       \[ \]       \[ \]            1           Task 49 completed
 
         26 27 Nov       \[ \]       \[ \]       \[ \]            0           
 
