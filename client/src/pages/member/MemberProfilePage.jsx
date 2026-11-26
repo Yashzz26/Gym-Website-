@@ -414,7 +414,7 @@ export default function MemberProfilePage() {
             </div>
           ) : (
             <div className="empty-membership-box">
-              <CreditCard size={48} style={{ color: '#0066ff' }} />
+              <CreditCard size={48} style={{ color: 'var(--color-accent)' }} />
               <h3>No Active Membership Found</h3>
               <p>
                 You do not have an active gym membership at the moment. Explore our membership tiers
@@ -422,10 +422,10 @@ export default function MemberProfilePage() {
               </p>
               <button
                 type="button"
-                className="btn-primary"
+                className="btn btn-primary"
                 onClick={() => navigate('/member/join')}
               >
-                Choose Membership Plan
+                <span>Choose Membership Plan</span>
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -435,7 +435,7 @@ export default function MemberProfilePage() {
           <div className="history-section">
             <div className="history-header">
               <h3>
-                <History size={20} style={{ color: '#0066ff' }} />
+                <History size={20} style={{ color: 'var(--color-accent)' }} />
                 Membership & Renewal History
               </h3>
               <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>

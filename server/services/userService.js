@@ -48,18 +48,32 @@ export const createUserService = (firestoreDb = defaultDb) => {
      * @param {string} uid
      * @returns {Promise<Object>} User document data
      */
-    async getUserById(uid) {
+    async getUserById(uid, email = null) {
       if (!uid) {
         throw new BadRequestError('User ID is required');
       }
 
       const docSnap = await getCollection().doc(uid).get();
 
-      if (!docSnap.exists) {
-        throw new NotFoundError(`User profile not found for ID: ${uid}`);
+      if (docSnap.exists) {
+        return { uid: docSnap.id, ...docSnap.data() };
       }
 
-      return { uid: docSnap.id, ...docSnap.data() };
+      if (email && typeof getCollection().where === 'function') {
+        try {
+          const snap = await getCollection()
+            .where('email', '==', String(email).trim().toLowerCase())
+            .get();
+          if (snap && !snap.empty && Array.isArray(snap.docs) && snap.docs.length > 0) {
+            const matched = snap.docs[0];
+            return { uid: matched.id, ...matched.data() };
+          }
+        } catch {
+          // Ignore if mock Firestore doesn't support filtering by email
+        }
+      }
+
+      throw new NotFoundError(`User profile not found for ID: ${uid}`);
     },
 
     /**

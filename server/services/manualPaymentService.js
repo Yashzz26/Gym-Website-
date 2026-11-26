@@ -12,6 +12,7 @@
  */
 
 import { db as defaultDb } from '../config/firebase.js';
+import { resolveRelatedUserIds } from '../utils/userResolver.js';
 import {
   BadRequestError,
   NotFoundError,
@@ -113,20 +114,30 @@ export const createManualPaymentService = (customDb = defaultDb) => {
         );
       }
 
-      // 4. Check for existing active membership (conflict guard)
-      const membershipsSnap = await getCollection('memberships')
-        .where('userId', '==', memberId)
-        .where('status', '==', 'active')
-        .get();
+      // 4. Check for existing active membership across related user IDs (conflict guard)
+      const { relatedUserIds } = await resolveRelatedUserIds(
+        customDb,
+        memberId,
+        member.email
+      );
 
       const now = new Date();
       let activeMembership = null;
-      membershipsSnap.forEach((doc) => {
-        const m = doc.data();
-        if (m.endDate && new Date(m.endDate) > now) {
-          activeMembership = { id: doc.id, ...m };
-        }
-      });
+
+      for (const targetUid of relatedUserIds) {
+        const membershipsSnap = await getCollection('memberships')
+          .where('userId', '==', targetUid)
+          .where('status', '==', 'active')
+          .get();
+
+        membershipsSnap.forEach((doc) => {
+          const m = doc.data();
+          if (m.endDate && new Date(m.endDate) > now) {
+            activeMembership = { id: doc.id, ...m };
+          }
+        });
+        if (activeMembership) break;
+      }
 
       if (activeMembership && !isRenewal) {
         throw new ConflictError(
@@ -175,6 +186,7 @@ export const createManualPaymentService = (customDb = defaultDb) => {
       // 7. Create new membership document
       const membershipData = {
         userId: memberId,
+        email: member.email || null,
         planId: plan.planId || planId,
         planName: plan.name,
         durationDays,
@@ -203,15 +215,17 @@ export const createManualPaymentService = (customDb = defaultDb) => {
         });
       }
 
-      // 9. Update user profile membership status
-      await getCollection('users').doc(memberId).set(
-        {
-          membershipStatus: 'active',
-          activeMembershipId: membershipId,
-          updatedAt: nowIso,
-        },
-        { merge: true }
-      );
+      // 9. Update user profile membership status across all related user documents
+      for (const uid of relatedUserIds) {
+        await getCollection('users').doc(uid).set(
+          {
+            membershipStatus: 'active',
+            activeMembershipId: membershipId,
+            updatedAt: nowIso,
+          },
+          { merge: true }
+        );
+      }
 
       // Update payment record with the new membershipId
       await getCollection('payments').doc(paymentId).update({ membershipId });

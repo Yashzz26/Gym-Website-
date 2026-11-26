@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CreditCard,
   CheckCircle2,
@@ -9,6 +10,8 @@ import {
   AlertCircle,
   RefreshCw,
   XCircle,
+  QrCode,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { listPlans } from '../../services/planService';
@@ -30,6 +33,7 @@ export default function OnlineJoiningPage() {
   const [step, setStep] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [currentMembership, setCurrentMembership] = useState(null);
+  const [browsingPlans, setBrowsingPlans] = useState(false);
 
   const [formData, setFormData] = useState({
     phone: '',
@@ -224,7 +228,6 @@ export default function OnlineJoiningPage() {
     <div className="online-joining-page">
       {/* Header */}
       <div className="joining-header">
-        <span className="badge badge-accent">Screen 1 · Online Joining</span>
         <h1 className="joining-title">Choose Your Fitness Journey</h1>
         <p className="joining-subtitle">
           Select an official membership plan, review your onboarding details, and complete your registration with guaranteed transparent pricing.
@@ -272,8 +275,77 @@ export default function OnlineJoiningPage() {
         </div>
       )}
 
+      {/* ACTIVE MEMBERSHIP STATUS VIEW */}
+      {step === 1 && !browsingPlans && currentMembership?.status === 'active' && !currentMembership?.isExpired && (
+        <div className="payment-success-card active-membership-notice" role="status">
+          <div className="success-icon-circle">
+            <CheckCircle2 size={32} />
+          </div>
+
+          <div>
+            <span className="success-status-badge">
+              <ShieldCheck size={14} /> Membership Active
+            </span>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
+              Your Membership Is Active
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: '0 auto' }}>
+              Your {currentMembership.planName || 'Gym Membership'} plan is verified and active. You can scan the entrance QR code at reception to check in.
+            </p>
+          </div>
+
+          <div className="pending-details-box">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Active Plan:</span>
+              <strong style={{ color: '#ffffff' }}>{currentMembership.planName || 'Membership Plan'}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Status:</span>
+              <span style={{ color: '#4ade80', fontWeight: 600 }}>Active</span>
+            </div>
+            {currentMembership.endDate && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Valid Until:</span>
+                <span>
+                  {new Date(currentMembership.endDate).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                  {typeof currentMembership.daysRemaining === 'number'
+                    ? ` (${currentMembership.daysRemaining} days remaining)`
+                    : ''}
+                </span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Payment Method:</span>
+              <span style={{ textTransform: 'uppercase' }}>{currentMembership.paymentMethod || 'Recorded'}</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/member/attendance" className="btn btn-primary">
+              <QrCode size={16} />
+              <span>Scan QR Attendance</span>
+            </Link>
+            <Link to="/member/profile" className="btn btn-secondary">
+              <ArrowRight size={16} />
+              <span>My Membership &amp; History</span>
+            </Link>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setBrowsingPlans(true)}
+            >
+              <span>Browse Plans</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* STEP 1: Plan Comparison Cards */}
-      {step === 1 && (
+      {step === 1 && (browsingPlans || currentMembership?.status !== 'active' || currentMembership?.isExpired) && (
         <div>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>

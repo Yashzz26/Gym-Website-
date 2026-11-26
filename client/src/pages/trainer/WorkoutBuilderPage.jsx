@@ -6,7 +6,6 @@ export default function WorkoutBuilderPage() {
     <PlaceholderScreen
       title="Workout Routine & Exercise Builder"
       role="Trainer"
-      day="19 (Task 37)"
       icon={Activity}
       description="Exercise programming suite for gym trainers. Build day-split routines (Push/Pull/Legs, Upper/Lower), assign target sets and rep tempos, and sync with member apps."
       features={[

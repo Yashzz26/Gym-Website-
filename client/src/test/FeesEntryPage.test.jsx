@@ -176,6 +176,37 @@ describe('FeesEntryPage — Reception Desk Fee Entry & Receipts (Day 15 Task 30)
       expect(screen.getByText(/MEMBERSHIP ACTIVATED/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /print \/ save pdf/i })).toBeInTheDocument();
     });
+
+    // Click Record Another Payment and confirm Rahul Sharma now shows Active status
+    fireEvent.click(screen.getByRole('button', { name: /record another payment/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
+    });
+    const activeBadges = screen.getAllByText('Active');
+    expect(activeBadges.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('auto-enables Renewal mode when backend returns 409 conflict requiring isRenewal=true', async () => {
+    const conflictErr = new Error(
+      'Member already has an active membership ending on 2026-12-25. Set isRenewal=true to extend.'
+    );
+    conflictErr.status = 409;
+    conflictErr.data = { details: { requireRenewalFlag: true } };
+    receptionService.recordManualPayment.mockRejectedValueOnce(conflictErr);
+
+    renderWithAuth(<FeesEntryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Rahul Sharma'));
+    fireEvent.click(screen.getByRole('button', { name: /record payment & issue receipt/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Renewal \/ Extension mode has been enabled below/i)).toBeInTheDocument();
+      expect(screen.getByText(/Active Membership Detected/i)).toBeInTheDocument();
+    });
   });
 
   it('switches to payment history tab and displays past manual payments', async () => {

@@ -13,6 +13,7 @@
 
 import { db as defaultDb } from '../config/firebase.js';
 import { qrService as defaultQrService } from './qrService.js';
+import { resolveRelatedUserIds } from '../utils/userResolver.js';
 import {
   BadRequestError,
   ConflictError,
@@ -72,7 +73,7 @@ export const createAttendanceService = (
      * @param {string} [gymId='fitmax-main'] - Gym identifier
      * @returns {Promise<Object>} Definitive check-in confirmation
      */
-    async recordCheckIn(userId, tokenString, gymId = 'fitmax-main') {
+    async recordCheckIn(userId, tokenString, gymId = 'fitmax-main', userEmail = null) {
       if (!userId) {
         throw new BadRequestError('User ID is required for check-in');
       }
@@ -80,10 +81,13 @@ export const createAttendanceService = (
         throw new BadRequestError('QR token is required for check-in');
       }
 
+      const { primaryUserId } = await resolveRelatedUserIds(customDb, userId, userEmail);
+      const effectiveUserId = primaryUserId || userId;
+
       // 1. Validate & consume QR token first via qrService (verifies HMAC signature, TTL, and replay)
       const tokenVerification = await customQrService.verifyAndConsumeToken(
         tokenString,
-        userId,
+        effectiveUserId,
         gymId
       );
       const { payload } = tokenVerification;
@@ -99,9 +103,9 @@ export const createAttendanceService = (
       const attendanceCol = getCollection('attendance');
 
       // Unique document ID enforcing 1 check-in per member per calendar day
-      const attendanceDocId = `att_${userId}_${todayDateStr}`;
+      const attendanceDocId = `att_${effectiveUserId}_${todayDateStr}`;
       const attDocRef = attendanceCol.doc(attendanceDocId);
-      const userDocRef = usersCol.doc(userId);
+      const userDocRef = usersCol.doc(effectiveUserId);
 
       let recordResult = null;
 
@@ -145,7 +149,7 @@ export const createAttendanceService = (
         // If not found via activeMembershipId, check fallback lookup
         if (!activeMembership) {
           const membershipsSnap = await membershipsCol
-            .where('userId', '==', userId)
+            .where('userId', '==', effectiveUserId)
             .where('status', '==', 'active')
             .get();
 
@@ -188,8 +192,8 @@ export const createAttendanceService = (
         const attendanceData = {
           attendanceId: attendanceDocId,
           checkInId: attendanceDocId,
-          userId,
-          memberId: userId,
+          userId: effectiveUserId,
+          memberId: effectiveUserId,
           memberName: userData.displayName || userData.name || userData.email?.split('@')[0] || 'Member',
           memberEmail: userData.email || null,
           gymId: payload.gymId || gymId,
@@ -240,9 +244,12 @@ export const createAttendanceService = (
      * @param {number} [limit=30]
      * @returns {Promise<Array<Object>>}
      */
-    async getMemberHistory(userId, limit = 30) {
+    async getMemberHistory(userId, limit = 30, userEmail = null) {
+      const { primaryUserId } = await resolveRelatedUserIds(customDb, userId, userEmail);
+      const effectiveUserId = primaryUserId || userId;
+
       const snap = await getCollection('attendance')
-        .where('userId', '==', userId)
+        .where('userId', '==', effectiveUserId)
         .orderBy('timestamp', 'desc')
         .limit(limit)
         .get();

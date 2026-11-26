@@ -5,9 +5,7 @@ export default function DailyReportPage() {
   return (
     <PlaceholderScreen
       title="Owner Analytics & Daily Report"
-      screenNumber={9}
       role="Owner"
-      day="26 (Task 52)"
       icon={BarChart3}
       description="Executive overview of daily gym revenue, Cash vs UPI collection split, overdue unpaid dues, new enrollments, and weekly attendance visual graphs."
       features={[

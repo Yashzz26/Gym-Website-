@@ -17,6 +17,7 @@ import {
   History,
   PlusCircle,
   FileText,
+  Phone,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -200,11 +201,47 @@ export default function FeesEntryPage() {
       };
 
       const result = await recordManualPayment(payload, token);
+      const paidMemberId = selectedMember.uid || selectedMember.id;
+
+      // Immediately update local member list so status badges and renewal state stay accurate
+      setMembers((prev) =>
+        prev.map((m) =>
+          (m.uid || m.id) === paidMemberId
+            ? {
+                ...m,
+                membershipStatus: 'active',
+                activeMembershipId: result.membership?.membershipId || m.activeMembershipId,
+              }
+            : m
+        )
+      );
+
+      // Re-sync member list from backend in the background, preserving active status for paid member
+      listRecentMembers(token)
+        .then((freshMembers) => {
+          if (Array.isArray(freshMembers)) {
+            setMembers(
+              freshMembers.map((m) =>
+                (m.uid || m.id) === paidMemberId
+                  ? {
+                      ...m,
+                      membershipStatus: 'active',
+                      activeMembershipId: result.membership?.membershipId || m.activeMembershipId,
+                    }
+                  : m
+              )
+            );
+          }
+        })
+        .catch(() => null);
 
       // Create enriched receipt object for display
       const receiptData = {
         ...result,
-        member: selectedMember,
+        member: {
+          ...selectedMember,
+          membershipStatus: 'active',
+        },
         plan: selectedPlan,
         recordedAt: new Date().toISOString(),
       };
@@ -215,13 +252,33 @@ export default function FeesEntryPage() {
       setRemarks('');
       setUpiReference('');
       setSelectedMember(null);
+      setIsRenewal(false);
     } catch (err) {
       console.error('Payment recording error:', err);
-      setError(
+      const errMsg =
         err.data?.message ||
-          err.message ||
-          'Failed to record payment. Please check member details and try again.'
-      );
+        err.message ||
+        'Failed to record payment. Please check member details and try again.';
+
+      if (
+        err.status === 409 ||
+        err.data?.details?.requireRenewalFlag ||
+        errMsg.includes('isRenewal=true')
+      ) {
+        const targetId = selectedMember?.uid || selectedMember?.id;
+        setMembers((prev) =>
+          prev.map((m) =>
+            (m.uid || m.id) === targetId ? { ...m, membershipStatus: 'active' } : m
+          )
+        );
+        setSelectedMember((prev) => (prev ? { ...prev, membershipStatus: 'active' } : prev));
+        setIsRenewal(true);
+        setError(
+          `${errMsg} Renewal / Extension mode has been enabled below — submit again to extend this membership.`
+        );
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -486,7 +543,10 @@ export default function FeesEntryPage() {
                         <span className="selected-name">{selectedMember.displayName}</span>
                         <span className="selected-email">{selectedMember.email}</span>
                         {selectedMember.phone && (
-                          <span className="selected-phone">📞 {selectedMember.phone}</span>
+                          <span className="selected-phone" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Phone size={13} />
+                            {selectedMember.phone}
+                          </span>
                         )}
                         <span className="selected-status">
                           Status: {selectedMember.membershipStatus || 'New Member'}
@@ -554,12 +614,18 @@ export default function FeesEntryPage() {
                 )}
 
                 {/* Renewal Notice Toggle */}
-                {selectedMember && selectedMember.membershipStatus === 'active' && (
+                {selectedMember && (
                   <div className="renewal-alert">
                     <div className="renewal-alert-text">
-                      <strong>Active Membership Detected</strong>
+                      <strong>
+                        {selectedMember.membershipStatus === 'active' || isRenewal
+                          ? 'Active Membership Detected / Extension Mode'
+                          : 'Membership Renewal / Extension'}
+                      </strong>
                       <p>
-                        This member already has an active plan. Recording this payment will extend their validity from their current expiration date.
+                        {selectedMember.membershipStatus === 'active' || isRenewal
+                          ? 'This member has an active plan. Recording this payment will extend their validity from their current expiration date.'
+                          : 'Check this box if you are renewing or extending an existing membership.'}
                       </p>
                     </div>
                     <label className="toggle-label">

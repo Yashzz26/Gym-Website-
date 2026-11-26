@@ -17,6 +17,26 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { firebaseDb } from '../config/firebase';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+async function fetchBackendProfile(user) {
+  if (typeof user?.getIdToken !== 'function' || typeof fetch !== 'function') {
+    return null;
+  }
+  try {
+    const token = await user.getIdToken();
+    if (!token) return null;
+    const res = await fetch(`${API_BASE}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const json = await res.json().catch(() => null);
+    return json?.data?.user || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * @typedef {Object} UserProfile
  * @property {string} uid
@@ -56,18 +76,32 @@ export function useProfile(user) {
     setLoading(true);
     setError(null);
 
-    getDoc(doc(firebaseDb, 'users', user.uid))
-      .then((snap) => {
+    Promise.all([
+      getDoc(doc(firebaseDb, 'users', user.uid)).catch((err) => ({ _error: err })),
+      fetchBackendProfile(user),
+    ])
+      .then(([snap, backendUser]) => {
         if (cancelled) return;
 
-        if (snap.exists()) {
-          const data = snap.data();
+        if (snap?._error && !backendUser) {
+          console.error('[useProfile] Failed to fetch user profile:', snap._error);
+          setError(snap._error);
+          return;
+        }
+
+        const fsData = snap && !snap._error && snap.exists() ? snap.data() : null;
+
+        if (fsData || backendUser) {
+          const merged = { ...(fsData || {}), ...(backendUser || {}) };
           setProfile({
             uid: user.uid,
-            role: data.role || 'member',
-            approvalStatus: data.approvalStatus || 'pending',
-            displayName: data.displayName || user.displayName || null,
-            email: data.email || user.email || null,
+            role: merged.role || 'member',
+            approvalStatus: merged.approvalStatus || 'pending',
+            membershipStatus: merged.membershipStatus || null,
+            activeMembershipId: merged.activeMembershipId || null,
+            displayName: merged.displayName || user.displayName || null,
+            email: merged.email || user.email || null,
+            phone: merged.phone || null,
           });
         } else {
           // Document doesn't exist yet — treat as newly registered member
@@ -79,11 +113,6 @@ export function useProfile(user) {
             email: user.email || null,
           });
         }
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('[useProfile] Failed to fetch user profile:', err);
-        setError(err);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

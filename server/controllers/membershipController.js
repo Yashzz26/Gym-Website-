@@ -56,7 +56,14 @@ export const createMembershipController = (service = defaultService) => {
         const result = await service.getMembershipById(membershipId);
 
         if (!isStaff && result.userId !== user.uid) {
-          throw new ForbiddenError('You can only view your own membership records');
+          let belongsToSelf = false;
+          if (user.email && typeof service.getUserMemberships === 'function') {
+            const own = await service.getUserMemberships(user.uid, user.email).catch(() => null);
+            belongsToSelf = Boolean(own?.history?.some((m) => m.membershipId === result.membershipId));
+          }
+          if (!belongsToSelf) {
+            throw new ForbiddenError('You can only view your own membership records');
+          }
         }
 
         res.status(200).json({
@@ -79,7 +86,8 @@ export const createMembershipController = (service = defaultService) => {
           throw new ForbiddenError('You can only view your own membership history');
         }
 
-        const result = await service.getUserMemberships(userId);
+        const isSelf = userId === user.uid;
+        const result = await service.getUserMemberships(userId, isSelf ? user.email : null);
 
         res.status(200).json({
           status: 'success',

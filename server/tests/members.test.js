@@ -115,6 +115,25 @@ function createMockFirestore() {
               },
             };
           },
+          where(field, op, val) {
+            return {
+              async get() {
+                const matches = [];
+                for (const [id, item] of usersStore.entries()) {
+                  if (op === '==' && item[field] === val) {
+                    matches.push({ id, data: () => ({ ...item }) });
+                  }
+                }
+                return {
+                  empty: matches.length === 0,
+                  docs: matches,
+                  forEach(cb) {
+                    matches.forEach(cb);
+                  },
+                };
+              },
+            };
+          },
         };
       }
 
@@ -557,6 +576,46 @@ describe('Member Online Joining & Plan Selection API (Day 11 Task 22)', () => {
       });
 
       assert.equal(res.status, 404);
+    });
+
+    test('GET /api/members/my-membership resolves active membership across Firebase UID and email-linked profile', async () => {
+      const users = mockDb._stores.usersStore;
+      const mems = mockDb._stores.membershipsStore;
+
+      users.set('member-1-uid', {
+        uid: 'member-1-uid',
+        email: 'member1@gmail.com',
+        displayName: 'Member 1',
+        role: 'member',
+        approvalStatus: 'active',
+        membershipStatus: 'active',
+      });
+      mems.set('mem-seeded-1', {
+        membershipId: 'mem-seeded-1',
+        userId: 'member-1-uid',
+        planId: 'plan-1-month',
+        planName: '1 Month Starter',
+        status: 'active',
+        paymentMethod: 'cash',
+        startDate: daysAgo(1),
+        endDate: daysFromNow(29),
+      });
+
+      // Sign in with a real Firebase Auth UID sharing the same email
+      activeUser = {
+        uid: 'xvVWFtmEo1X6NA74QZWdluiIaha2',
+        email: 'member1@gmail.com',
+        role: 'member',
+      };
+
+      const res = await fetch(`${baseUrl}/api/members/my-membership`);
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.ok(body.data);
+      assert.equal(body.data.membershipId, 'mem-seeded-1');
+      assert.equal(body.data.status, 'active');
+      assert.equal(body.data.planName, '1 Month Starter');
+      assert.equal(body.data.isExpired, false);
     });
   });
 });

@@ -23,11 +23,7 @@ export default function PlaceholderScreen({
             </div>
           )}
           <div className="placeholder-meta">
-            {screenNumber && (
-              <span className="badge badge-accent">Screen {screenNumber}</span>
-            )}
-            {role && <span className="badge badge-warning">{role}</span>}
-            {day && <span className="badge badge-info">Planned: Day {day}</span>}
+            {role && <span className="badge badge-warning">{role} Portal</span>}
           </div>
         </div>
 

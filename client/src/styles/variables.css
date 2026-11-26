@@ -16,14 +16,15 @@
   --color-bg-elevated: #21232a;       /* Modals, popovers, dropdown menus */
   --color-bg-overlay: rgba(13, 14, 17, 0.82); /* Modal backdrop */
 
-  /* Brand / Accent Colors — Industrial Ember Accent (Preview) & Legacy Brand */
-  --color-brand-blue: #0080ff;        /* Preserved original electric blue for comparison */
-  --color-accent: #d9381e;            /* Accessible Athletic Ember Red primary accent (>= 4.5:1 on white) */
-  --color-accent-hover: #bf2d15;      /* Hover state for buttons/links */
-  --color-accent-active: #a82610;     /* Pressed / active accent state */
-  --color-accent-subtle: rgba(217, 56, 30, 0.12); /* Subtle badge / highlight fill */
-  --color-accent-border: rgba(217, 56, 30, 0.32); /* Subtle accent hairline */
-  --color-accent-contrast: #ffffff;   /* High-contrast crisp white text on accent (4.64:1 WCAG AA) */
+  /* Brand / Accent Colors — Professional Athletic Sky Blue System */
+  --color-brand-blue: #0284c7;        /* Accessible Sky Blue (Sky 600, >= 4.5:1 on white) */
+  --color-accent: #0284c7;            /* Sky Blue primary accent */
+  --color-accent-light: #38bdf8;      /* Lighter sky blue (Sky 400) for text & icons on dark surfaces */
+  --color-accent-hover: #0369a1;      /* Hover state for buttons/links (Sky 700) */
+  --color-accent-active: #075985;     /* Pressed / active accent state (Sky 800) */
+  --color-accent-subtle: rgba(14, 165, 233, 0.12); /* Subtle sky blue badge / highlight fill */
+  --color-accent-border: rgba(56, 189, 248, 0.30); /* Subtle sky blue hairline */
+  --color-accent-contrast: #ffffff;   /* Crisp white text on sky blue */
 
   /* Typography / Content Colors */
   --color-text-primary: #ededed;      /* Primary high-contrast text */

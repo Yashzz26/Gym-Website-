@@ -36,44 +36,44 @@ const ROLE_NAV_CONFIG = {
     label: 'Owner Portal',
     badge: 'Owner',
     items: [
-      { to: '/owner/dashboard', label: 'Owner Dashboard', icon: LayoutDashboard, screen: 'Dashboard' },
-      { to: '/owner/qr', label: 'Entrance QR Display', icon: QrCode, screen: 'Gate QR' },
-      { to: '/owner/staff', label: 'Staff Approvals', icon: ShieldCheck, screen: 'Staff' },
-      { to: '/owner/plans', label: 'Membership Plans', icon: Layers, screen: 'Plans' },
-      { to: '/owner/inactive', label: 'Inactive Members', icon: UserX, screen: 'Screen 10' },
-      { to: '/owner/reports', label: 'Daily Report', icon: BarChart3, screen: 'Screen 9' },
-      { to: '/owner/settings', label: 'Gym Settings', icon: Settings, screen: 'Settings' },
+      { to: '/owner/dashboard', label: 'Owner Dashboard', icon: LayoutDashboard },
+      { to: '/owner/qr', label: 'Entrance QR Display', icon: QrCode },
+      { to: '/owner/staff', label: 'Staff Approvals', icon: ShieldCheck },
+      { to: '/owner/plans', label: 'Membership Plans', icon: Layers },
+      { to: '/owner/inactive', label: 'Inactive Members', icon: UserX },
+      { to: '/owner/reports', label: 'Daily Report', icon: BarChart3 },
+      { to: '/owner/settings', label: 'Gym Settings', icon: Settings },
     ],
   },
   reception: {
     label: 'Reception Portal',
     badge: 'Reception',
     items: [
-      { to: '/reception/attendance', label: "Today's Attendance", icon: CalendarCheck, screen: 'Screen 4' },
-      { to: '/reception/qr', label: 'Entrance QR Display', icon: QrCode, screen: 'Gate QR' },
-      { to: '/reception/fees', label: 'Fees Entry', icon: Receipt, screen: 'Screen 5' },
-      { to: '/reception/renewals', label: 'Renewal List', icon: Clock, screen: 'Screen 6' },
-      { to: '/reception/register', label: 'New Member', icon: UserPlus, screen: 'Register' },
+      { to: '/reception/attendance', label: "Today's Attendance", icon: CalendarCheck },
+      { to: '/reception/qr', label: 'Entrance QR Display', icon: QrCode },
+      { to: '/reception/fees', label: 'Fees Entry', icon: Receipt },
+      { to: '/reception/renewals', label: 'Renewal List', icon: Clock },
+      { to: '/reception/register', label: 'New Member', icon: UserPlus },
     ],
   },
   trainer: {
     label: 'Trainer Portal',
     badge: 'Trainer',
     items: [
-      { to: '/trainer/members', label: 'My Members', icon: Users, screen: 'Screen 7' },
-      { to: '/trainer/diet', label: 'Diet Plans', icon: Utensils, screen: 'Screen 8' },
-      { to: '/trainer/workouts', label: 'Workout Builder', icon: Activity, screen: 'Workouts' },
+      { to: '/trainer/members', label: 'My Members', icon: Users },
+      { to: '/trainer/diet', label: 'Diet Plans', icon: Utensils },
+      { to: '/trainer/workouts', label: 'Workout Builder', icon: Activity },
     ],
   },
   member: {
     label: 'Member Portal',
     badge: 'Member',
     items: [
-      { to: '/member/join', label: 'Online Joining', icon: CreditCard, screen: 'Screen 1' },
-      { to: '/member/attendance', label: 'QR Attendance', icon: QrCode, screen: 'Screen 2' },
-      { to: '/member/workout', label: 'Workout Plan', icon: Dumbbell, screen: 'Screen 3' },
-      { to: '/member/diet', label: 'Diet Plan', icon: Utensils, screen: 'Diet' },
-      { to: '/member/profile', label: 'My Membership', icon: User, screen: 'Profile' },
+      { to: '/member/join', label: 'Online Joining', icon: CreditCard },
+      { to: '/member/attendance', label: 'QR Attendance', icon: QrCode },
+      { to: '/member/workout', label: 'Workout Plan', icon: Dumbbell },
+      { to: '/member/diet', label: 'Diet Plan', icon: Utensils },
+      { to: '/member/profile', label: 'My Membership', icon: User },
     ],
   },
 };
@@ -81,22 +81,18 @@ const ROLE_NAV_CONFIG = {
 export default function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated } = useAuth();
 
-  // Active role group can be determined from current URL path or switched
-  const currentPathRole = location.pathname.split('/')[1];
-  const defaultRole = ['owner', 'reception', 'trainer', 'member'].includes(currentPathRole)
-    ? currentPathRole
-    : 'owner';
-
-  const [activeRole, setActiveRole] = useState(defaultRole);
+  // Active role group is strictly derived from the authenticated profile role
+  const userRole = profile?.role || 'member';
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  // Find current screen title
-  const currentNavGroup = ROLE_NAV_CONFIG[activeRole] || ROLE_NAV_CONFIG.owner;
-  const currentItem = currentNavGroup.items.find((item) => item.to === location.pathname);
+  // Find current screen title across known routes
+  const currentNavGroup = ROLE_NAV_CONFIG[userRole] || ROLE_NAV_CONFIG.member;
+  const allNavItems = Object.values(ROLE_NAV_CONFIG).flatMap((g) => g.items);
+  const currentItem = allNavItems.find((item) => item.to === location.pathname);
   const currentTitle = currentItem ? currentItem.label : 'Gym Management System';
   const [logoutError, setLogoutError] = useState('');
 
@@ -136,26 +132,36 @@ export default function AppShell() {
           </button>
         </div>
 
-        {/* Role Selector Tabs (Preview mode for 4 distinct role portals) */}
-        <div className="role-selector-wrap">
-          <span className="role-selector-label">Role Workspace</span>
-          <div className="role-tabs">
-            {Object.keys(ROLE_NAV_CONFIG).map((roleKey) => (
-              <button
-                key={roleKey}
-                type="button"
-                className={`role-tab-btn ${activeRole === roleKey ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveRole(roleKey);
-                }}
-              >
-                {roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}
-              </button>
-            ))}
+        {/* Authenticated Role Workspace Welcome Banner (Replaces 4-button switcher) */}
+        <div className="sidebar-workspace-header">
+          <div className="workspace-welcome-badge">
+            <span className="welcome-role-tag">
+              {userRole === 'owner'
+                ? 'Owner Workspace'
+                : userRole === 'reception'
+                ? 'Reception Workspace'
+                : userRole === 'trainer'
+                ? 'Trainer Workspace'
+                : 'Member Workspace'}
+            </span>
+          </div>
+          <div className="workspace-greeting">
+            <span className="workspace-hello">
+              {userRole === 'owner'
+                ? 'Welcome, Owner'
+                : userRole === 'reception'
+                ? 'Welcome, Reception'
+                : userRole === 'trainer'
+                ? 'Welcome, Trainer'
+                : 'Welcome, Member'}
+            </span>
+            <span className="workspace-user-name">
+              {profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Fitness Member'}
+            </span>
           </div>
         </div>
 
-        {/* Navigation Links for Active Role */}
+        {/* Navigation Links for Authenticated Role */}
         <nav className="sidebar-nav">
           <div className="nav-group-title">
             <span>{currentNavGroup.label}</span>
@@ -174,27 +180,28 @@ export default function AppShell() {
                   >
                     <Icon size={18} className="nav-icon" />
                     <span className="nav-label">{item.label}</span>
-                    <span className="nav-screen-tag">{item.screen}</span>
                   </NavLink>
                 </li>
               );
             })}
           </ul>
 
-          <div className="nav-divider" />
-
-          {/* Quick link to Auth portal */}
-          <div className="nav-group-title">
-            <span>Authentication</span>
-          </div>
-          <ul className="nav-list">
-            <li className="nav-item">
-              <Link to="/login" onClick={closeMobileMenu} className="nav-link">
-                <LogOut size={18} className="nav-icon" />
-                <span className="nav-label">Sign In / Switch</span>
-              </Link>
-            </li>
-          </ul>
+          {!isAuthenticated && (
+            <>
+              <div className="nav-divider" />
+              <div className="nav-group-title">
+                <span>Account</span>
+              </div>
+              <ul className="nav-list">
+                <li className="nav-item">
+                  <Link to="/login" onClick={closeMobileMenu} className="nav-link">
+                    <LogOut size={18} className="nav-icon" />
+                    <span className="nav-label">Sign In</span>
+                  </Link>
+                </li>
+              </ul>
+            </>
+          )}
         </nav>
 
         {/* Sidebar Footer */}
@@ -205,9 +212,11 @@ export default function AppShell() {
             </div>
             <div className="user-info">
               <span className="user-name">
-                {user?.displayName || user?.email || 'Signed-out visitor'}
+                {profile?.displayName || user?.displayName || user?.email || 'Member'}
               </span>
-              <span className="user-role-tag">{isAuthenticated ? activeRole : 'preview'}</span>
+              <span className="user-role-tag">
+                {isAuthenticated ? userRole.toUpperCase() : 'VISITOR'}
+              </span>
             </div>
           </div>
         </div>

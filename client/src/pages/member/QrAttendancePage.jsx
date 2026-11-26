@@ -67,6 +67,8 @@ export default function QrAttendancePage() {
   const scannerRef = useRef(null);
   const isMountedRef = useRef(true);
   const isProcessingRef = useRef(false);
+  const lastScannedTokenRef = useRef('');
+  const lastScannedTimeRef = useRef(0);
 
   // Check secure context on mount
   useEffect(() => {
@@ -120,14 +122,46 @@ export default function QrAttendancePage() {
   }, [historyRecords]);
 
   /**
+   * Stop and cleanup the active camera scanner
+   */
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+        await scannerRef.current.clear();
+      } catch {
+        // Ignore stop errors on unmount
+      }
+      scannerRef.current = null;
+    }
+  }, []);
+
+  /**
    * Submit token to check-in API
    */
   const handleTokenSubmit = useCallback(
     async (tokenString) => {
-      if (isProcessingRef.current) return;
+      if (!tokenString || isProcessingRef.current) return;
+
+      const now = Date.now();
+      // Deduplicate: prevent rapid spam of the same token within 10 seconds
+      if (
+        lastScannedTokenRef.current === tokenString &&
+        now - lastScannedTimeRef.current < 10000
+      ) {
+        return;
+      }
+
+      lastScannedTokenRef.current = tokenString;
+      lastScannedTimeRef.current = now;
       isProcessingRef.current = true;
       setScannerState('processing');
       setErrorMessage('');
+
+      // Stop camera scanner immediately on token capture
+      await stopScanner();
 
       try {
         const authToken = user ? await user.getIdToken() : null;
@@ -149,25 +183,8 @@ export default function QrAttendancePage() {
         isProcessingRef.current = false;
       }
     },
-    [user, loadAttendanceHistory]
+    [user, loadAttendanceHistory, stopScanner]
   );
-
-  /**
-   * Stop and cleanup the active camera scanner
-   */
-  const stopScanner = useCallback(async () => {
-    if (scannerRef.current) {
-      try {
-        if (scannerRef.current.isScanning) {
-          await scannerRef.current.stop();
-        }
-        await scannerRef.current.clear();
-      } catch {
-        // Ignore stop errors on unmount
-      }
-      scannerRef.current = null;
-    }
-  }, []);
 
   /**
    * Start camera scanner via Html5Qrcode
@@ -268,15 +285,34 @@ export default function QrAttendancePage() {
     };
   }, [activeTab, manualMode, scannerState, startScanner, stopScanner]);
 
+  // Pause scanner when tab is hidden / in background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopScanner();
+      } else if (activeTab === 'scanner' && !manualMode && scannerState === 'idle') {
+        startScanner();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeTab, manualMode, scannerState, startScanner, stopScanner]);
+
   // Reset and restart
   const handleReset = () => {
     setCheckInResult(null);
     setErrorMessage('');
     setManualToken('');
+    lastScannedTokenRef.current = '';
+    lastScannedTimeRef.current = 0;
     isProcessingRef.current = false;
     if (manualMode) {
       setScannerState('idle');
     } else {
+      setScannerState('idle');
       startScanner();
     }
   };

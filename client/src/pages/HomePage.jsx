@@ -19,16 +19,16 @@ import './HomePage.css';
 export default function HomePage() {
   const { profile } = useAuth();
 
-  const portals = [
+  const allPortals = [
     {
       title: 'Member Portal',
       desc: 'Join online, scan gate QR for attendance, and track daily trainer-assigned workouts.',
       badge: 'Member',
       badgeClass: 'badge-accent',
       links: [
-        { to: '/member/join', label: 'Online Joining', icon: CreditCard, tag: 'Screen 1' },
-        { to: '/member/attendance', label: 'QR Attendance', icon: QrCode, tag: 'Screen 2' },
-        { to: '/member/workout', label: 'Workout Plan', icon: CreditCard, tag: 'Screen 3' },
+        { to: '/member/join', label: 'Online Joining', icon: CreditCard },
+        { to: '/member/attendance', label: 'QR Attendance', icon: QrCode },
+        { to: '/member/workout', label: 'Workout Plan', icon: CreditCard },
       ],
     },
     {
@@ -37,9 +37,9 @@ export default function HomePage() {
       badge: 'Reception',
       badgeClass: 'badge-warning',
       links: [
-        { to: '/reception/attendance', label: "Today's Attendance", icon: CalendarCheck, tag: 'Screen 4' },
-        { to: '/reception/fees', label: 'Fees Entry', icon: Receipt, tag: 'Screen 5' },
-        { to: '/reception/renewals', label: 'Renewal List', icon: Clock, tag: 'Screen 6' },
+        { to: '/reception/attendance', label: "Today's Attendance", icon: CalendarCheck },
+        { to: '/reception/fees', label: 'Fees Entry', icon: Receipt },
+        { to: '/reception/renewals', label: 'Renewal List', icon: Clock },
       ],
     },
     {
@@ -48,8 +48,8 @@ export default function HomePage() {
       badge: 'Trainer',
       badgeClass: 'badge-info',
       links: [
-        { to: '/trainer/members', label: 'My Members', icon: Users, tag: 'Screen 7' },
-        { to: '/trainer/diet', label: 'Diet Plan', icon: Utensils, tag: 'Screen 8' },
+        { to: '/trainer/members', label: 'My Members', icon: Users },
+        { to: '/trainer/diet', label: 'Diet Plan', icon: Utensils },
       ],
     },
     {
@@ -58,11 +58,21 @@ export default function HomePage() {
       badge: 'Owner',
       badgeClass: 'badge-danger',
       links: [
-        { to: '/owner/dashboard', label: 'Daily Analytics', icon: BarChart3, tag: 'Screen 9' },
-        { to: '/owner/inactive', label: 'Inactive Members', icon: UserX, tag: 'Screen 10' },
+        { to: '/owner/dashboard', label: 'Daily Analytics', icon: BarChart3 },
+        { to: '/owner/inactive', label: 'Inactive Members', icon: UserX },
       ],
     },
   ];
+
+  const userRole = profile?.role || 'member';
+  const portals = allPortals.filter((portal) => {
+    if (!profile?.role) return true;
+    if (userRole === 'owner') return true;
+    if (userRole === 'reception') return portal.badge === 'Reception';
+    if (userRole === 'trainer') return portal.badge === 'Trainer';
+    if (userRole === 'member') return portal.badge === 'Member';
+    return true;
+  });
 
   return (
     <div className="home-page">
@@ -148,7 +158,6 @@ export default function HomePage() {
                       <span>{link.label}</span>
                     </div>
                     <div className="portal-link-right">
-                      <span className="portal-screen-tag">{link.tag}</span>
                       <ArrowRight size={14} className="portal-arrow" />
                     </div>
                   </Link>

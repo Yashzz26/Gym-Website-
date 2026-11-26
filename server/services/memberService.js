@@ -3,6 +3,7 @@
  */
 
 import { db as defaultDb } from '../config/firebase.js';
+import { resolveRelatedUserIds } from '../utils/userResolver.js';
 import {
   BadRequestError,
   NotFoundError,
@@ -115,29 +116,56 @@ export const createMemberService = (customDb = defaultDb) => {
      * Get the active or pending membership record for a member.
      *
      * @param {string} userId
+     * @param {string|null} [email]
      * @returns {Promise<Object|null>}
      */
-    async getCurrentMembership(userId) {
+    async getCurrentMembership(userId, email = null) {
       if (!userId) {
         throw new BadRequestError('User ID is required');
       }
 
-      const snapshot = await getMembershipsCollection()
-        .where('userId', '==', userId)
-        .get();
+      const { relatedUserIds } = await resolveRelatedUserIds(customDb, userId, email);
+      const now = new Date();
+      const seen = new Set();
+      const records = [];
 
-      if (snapshot.empty) {
+      for (const targetUid of relatedUserIds) {
+        const snapshot = await getMembershipsCollection()
+          .where('userId', '==', targetUid)
+          .get();
+
+        if (!snapshot.empty) {
+          snapshot.forEach((doc) => {
+            if (seen.has(doc.id)) return;
+            seen.add(doc.id);
+            const data = doc.data();
+            const endDate = data.endDate ? new Date(data.endDate) : null;
+            const isExpired = Boolean(endDate && data.status !== 'cancelled' && endDate < now);
+            const daysRemaining = endDate
+              ? Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)))
+              : 0;
+
+            records.push({
+              membershipId: doc.id,
+              ...data,
+              daysRemaining,
+              isExpired,
+            });
+          });
+        }
+      }
+
+      if (records.length === 0) {
         return null;
       }
 
-      const records = [];
-      snapshot.forEach((doc) => {
-        records.push({ membershipId: doc.id, ...doc.data() });
-      });
-
-      // Sort newest first
-      records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      return records[0];
+      // Sort newest first, then prefer active non-expired > payment_pending > latest
+      records.sort((a, b) => new Date(b.createdAt || b.startDate || 0) - new Date(a.createdAt || a.startDate || 0));
+      return (
+        records.find((m) => m.status === 'active' && !m.isExpired) ||
+        records.find((m) => m.status === 'payment_pending') ||
+        records[0]
+      );
     },
 
     /**

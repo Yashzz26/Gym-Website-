@@ -3,6 +3,7 @@
  */
 
 import { db as defaultDb } from '../config/firebase.js';
+import { resolveRelatedUserIds } from '../utils/userResolver.js';
 import {
   BadRequestError,
   ConflictError,
@@ -231,31 +232,37 @@ export const createMembershipService = (customDb = defaultDb) => {
     /**
      * Retrieve full membership history and current active membership for a user.
      */
-    async getUserMemberships(userId) {
+    async getUserMemberships(userId, email = null) {
       if (!userId) {
         throw new BadRequestError('User ID is required');
       }
 
-      const snapshot = await getMembershipsCollection()
-        .where('userId', '==', userId)
-        .get();
-
+      const { relatedUserIds } = await resolveRelatedUserIds(customDb, userId, email);
       const now = new Date();
+      const seen = new Set();
       const records = [];
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const endDate = new Date(data.endDate);
-        const daysRemaining = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
-        const isExpired = data.status !== 'cancelled' && endDate < now;
+      for (const targetUid of relatedUserIds) {
+        const snapshot = await getMembershipsCollection()
+          .where('userId', '==', targetUid)
+          .get();
 
-        records.push({
-          membershipId: doc.id,
-          ...data,
-          daysRemaining,
-          isExpired,
+        snapshot.forEach((doc) => {
+          if (seen.has(doc.id)) return;
+          seen.add(doc.id);
+          const data = doc.data();
+          const endDate = new Date(data.endDate);
+          const daysRemaining = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
+          const isExpired = data.status !== 'cancelled' && endDate < now;
+
+          records.push({
+            membershipId: doc.id,
+            ...data,
+            daysRemaining,
+            isExpired,
+          });
         });
-      });
+      }
 
       // Sort newest first by startDate
       records.sort((a, b) => new Date(b.startDate || b.createdAt) - new Date(a.startDate || a.createdAt));

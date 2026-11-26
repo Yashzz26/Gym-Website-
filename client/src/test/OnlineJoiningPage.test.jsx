@@ -132,6 +132,27 @@ describe('OnlineJoiningPage — Member Online Plan Selection (Day 11 Task 22)', 
     expect(screen.getByText('₹11,999')).toBeInTheDocument();
   });
 
+  it('displays active membership card directly when member already has an active membership', async () => {
+    memberService.getMyMembership.mockResolvedValueOnce({
+      membershipId: 'existing-active-1',
+      planName: '1 Month Starter',
+      durationDays: 30,
+      priceInPaise: 149900,
+      status: 'active',
+      isExpired: false,
+      daysRemaining: 29,
+      paymentMethod: 'cash',
+      endDate: new Date(Date.now() + 29 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+
+    renderWithAuth(<OnlineJoiningPage />);
+
+    expect(await screen.findByText(/your membership is active/i)).toBeInTheDocument();
+    expect(screen.getByText('1 Month Starter')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /scan qr attendance/i })).toHaveAttribute('href', '/member/attendance');
+    expect(screen.getByRole('link', { name: /my membership/i })).toHaveAttribute('href', '/member/profile');
+  });
+
   it('integrates Razorpay Checkout: requests server order and shows success state on gateway response', async () => {
     memberService.getMyMembership.mockResolvedValueOnce({
       membershipId: 'existing-pending-1',

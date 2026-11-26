@@ -9,8 +9,12 @@
 import rateLimit from 'express-rate-limit';
 
 export const configureRateLimiter = (options = {}) => {
-  const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000; // 15 minutes
-  const max = Number(process.env.RATE_LIMIT_MAX) || 100; // 100 requests per window
+  const isDev = (process.env.NODE_ENV || 'development') !== 'production';
+  const defaultWindowMs = isDev ? 60 * 1000 : 15 * 60 * 1000; // 1 min in dev, 15 mins in prod
+  const defaultMax = isDev ? 10000 : 100; // 10,000 in dev, 100 in prod
+
+  const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS) || defaultWindowMs;
+  const max = Number(process.env.RATE_LIMIT_MAX) || defaultMax;
 
   return rateLimit({
     windowMs,

@@ -24,7 +24,8 @@ export const createMemberController = (service = defaultService) => {
     async getMyMembership(req, res, next) {
       try {
         const userId = req.user?.uid;
-        const membership = await service.getCurrentMembership(userId);
+        const email = req.user?.email || null;
+        const membership = await service.getCurrentMembership(userId, email);
 
         res.status(200).json({
           status: 'success',

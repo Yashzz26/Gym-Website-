@@ -14,8 +14,9 @@ export const createAttendanceController = (service = defaultService) => {
       try {
         const { token, gymId = 'fitmax-main' } = req.body;
         const userId = req.user.uid;
+        const userEmail = req.user.email || null;
 
-        const checkInResult = await service.recordCheckIn(userId, token, gymId);
+        const checkInResult = await service.recordCheckIn(userId, token, gymId, userEmail);
 
         res.status(201).json({
           status: 'success',
@@ -34,9 +35,10 @@ export const createAttendanceController = (service = defaultService) => {
     async getMyHistory(req, res, next) {
       try {
         const userId = req.user.uid;
+        const userEmail = req.user.email || null;
         const limit = Number(req.query.limit) || 30;
 
-        const history = await service.getMemberHistory(userId, limit);
+        const history = await service.getMemberHistory(userId, limit, userEmail);
 
         res.status(200).json({
           status: 'success',

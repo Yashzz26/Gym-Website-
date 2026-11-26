@@ -106,15 +106,6 @@
 .portal-link-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-}
-
-.portal-screen-tag {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  background-color: var(--color-bg-secondary);
-  padding: 2px 6px;
-  border-radius: var(--radius-xs);
 }
 
 .portal-arrow {

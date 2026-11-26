@@ -14,7 +14,7 @@ export const createUserController = (userService = defaultUserService) => ({
    */
   async getMe(req, res, next) {
     try {
-      const user = await userService.getUserById(req.user.uid);
+      const user = await userService.getUserById(req.user.uid, req.user.email);
       res.status(200).json({
         status: 'success',
         data: { user },

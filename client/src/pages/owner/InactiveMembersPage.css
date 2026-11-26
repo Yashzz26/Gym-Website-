@@ -43,7 +43,7 @@
   border-radius: 10px;
   background-color: var(--surface-card, #18181b);
   border: 1px solid var(--border-subtle, #27272a);
-  color: var(--brand-primary, #d9381e);
+  color: var(--color-accent, #0284c7);
   flex-shrink: 0;
 }
 
@@ -95,8 +95,8 @@
 }
 
 .bulk-action-btn {
-  background-color: var(--brand-primary, #d9381e);
-  border: 1px solid var(--brand-primary, #d9381e);
+  background-color: var(--color-accent, #0284c7);
+  border: 1px solid var(--color-accent, #0284c7);
   color: #ffffff;
 }
 
@@ -272,7 +272,7 @@
 }
 
 .search-input:focus {
-  border-color: var(--brand-primary, #d9381e);
+  border-color: var(--color-accent, #0284c7);
 }
 
 .search-input::placeholder {
@@ -318,7 +318,7 @@
 }
 
 .threshold-select:focus {
-  border-color: var(--brand-primary, #d9381e);
+  border-color: var(--color-accent, #0284c7);
 }
 
 /* Urgency Filter Tabs */
@@ -350,7 +350,7 @@
 
 .tab-btn.active {
   background-color: var(--surface-card, #18181b);
-  border-color: var(--brand-primary, #d9381e);
+  border-color: var(--color-accent, #0284c7);
   color: var(--text-primary, #f4f4f5);
 }
 
@@ -693,8 +693,8 @@
 }
 
 .channel-pill.active {
-  border-color: var(--brand-primary, #d9381e);
-  background-color: rgba(217, 56, 30, 0.08);
+  border-color: var(--color-accent, #0284c7);
+  background-color: rgba(14, 165, 233, 0.08);
   color: var(--text-primary, #f4f4f5);
 }
 
@@ -740,7 +740,7 @@
 }
 
 .form-textarea:focus {
-  border-color: var(--brand-primary, #d9381e);
+  border-color: var(--color-accent, #0284c7);
 }
 
 .form-textarea::placeholder {
@@ -788,8 +788,8 @@
   gap: 8px;
   height: 38px;
   padding: 0 18px;
-  background-color: var(--brand-primary, #d9381e);
-  border: 1px solid var(--brand-primary, #d9381e);
+  background-color: var(--color-accent, #0284c7);
+  border: 1px solid var(--color-accent, #0284c7);
   border-radius: 6px;
   color: #ffffff;
   font-size: 0.875rem;
@@ -826,7 +826,7 @@
 }
 
 .loading-spinner {
-  color: var(--brand-primary, #d9381e);
+  color: var(--color-accent, #0284c7);
 }
 
 .spinning {
