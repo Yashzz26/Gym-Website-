@@ -544,7 +544,7 @@ counts contribution days, not the number of commits as separate squares.
         approved for the intended WhatsApp account/language, and log
         Meta message ID plus delivery status.
     -   Commit: `feat(whatsapp): send templates and track delivery`
--   [ ] **Task 50: Add renewal and inactive-member reminder jobs** \[L\]
+-   [x] **Task 50: Add renewal and inactive-member reminder jobs** \[L\]
     -   Add idempotent scheduled jobs for three-day expiry reminders and
         inactive-member follow-ups; prevent duplicate sends.
     -   Commit: `feat(automation): schedule membership reminders`
@@ -689,7 +689,7 @@ counts contribution days, not the number of commits as separate squares.
 
         24 25 Nov       \[x\]       \[x\]       \[x\]            2           b3a3957
 
-        25 26 Nov       \[x\]       \[ \]       \[ \]            1           Task 49 completed
+        25 26 Nov       \[x\]       \[x\]       \[ \]            2           Task 49 and Task 50 completed
 
         26 27 Nov       \[ \]       \[ \]       \[ \]            0           
 
