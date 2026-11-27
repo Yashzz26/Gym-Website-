@@ -560,7 +560,7 @@ counts contribution days, not the number of commits as separate squares.
         memberships expiring within seven days as upcoming renewals, not
         automatically as debt.
     -   Commit: `feat(reports): add daily and weekly analytics APIs`
--   [ ] **Task 52: Build owner reports dashboard** \[M\]
+-   [x] **Task 52: Build owner reports dashboard** \[M\]
     -   Display report cards and weekly attendance chart using real API
         data, with loading, empty and error states.
     -   Commit: `feat(owner): build reports dashboard`
