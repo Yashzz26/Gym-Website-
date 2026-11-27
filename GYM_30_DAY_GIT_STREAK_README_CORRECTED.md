@@ -548,11 +548,11 @@ counts contribution days, not the number of commits as separate squares.
     -   Add idempotent scheduled jobs for three-day expiry reminders and
         inactive-member follow-ups; prevent duplicate sends.
     -   Commit: `feat(automation): schedule membership reminders`
--   [ ] Both planned commits pushed and visible on GitHub (Day 25).
+-   [x] Both planned commits pushed and visible on GitHub (Day 25).
 
 ### Day 26 --- Friday, 27 November 2026 --- Owner reports
 
--   [ ] **Task 51: Create daily and weekly report APIs** \[M\]
+-   [x] **Task 51: Create daily and weekly report APIs** \[M\]
     -   Aggregate verified payment and attendance records for daily
         revenue, cash/UPI split, pending dues, new members and renewals.
         Define pending dues separately from upcoming renewals: include

@@ -40,6 +40,7 @@ import dietRouter from './routes/diet.js';
 import notificationsRouter from './routes/notifications.js';
 import whatsappRouter from './routes/whatsapp.js';
 import remindersRouter from './routes/reminders.js';
+import reportsRouter from './routes/reports.js';
 import paymentController from './controllers/paymentController.js';
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,7 @@ export const createApp = () => {
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/whatsapp', whatsappRouter);
   app.use('/api/reminders', remindersRouter);
+  app.use('/api/reports', reportsRouter);
 
   // Direct Standard Checkout endpoints (/api/create-order and /api/verify-payment)
   app.post('/api/create-order', paymentController.createDirectOrder);
