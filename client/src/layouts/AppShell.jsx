@@ -25,6 +25,8 @@ import {
   ChevronRight,
   Download,
   WifiOff,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { logout } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
@@ -84,12 +86,15 @@ const ROLE_NAV_CONFIG = {
 
 export default function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [notificationsPath, setNotificationsPath] = useState(null);
   const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
       ? navigator.onLine
       : true
   );
   const location = useLocation();
+  const notificationsOpen = notificationsPath === location.pathname;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -117,6 +122,10 @@ export default function AppShell() {
 
   // Active role group is strictly derived from the authenticated profile role
   const userRole = profile?.role || 'member';
+  const isMemberPortal = userRole === 'member';
+  const displayName =
+    profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Member';
+  const memberInitial = (displayName[0] || 'M').toUpperCase();
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -139,7 +148,11 @@ export default function AppShell() {
   };
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell ${isMemberPortal ? 'is-member-shell' : ''} ${
+        isMemberPortal && sidebarCollapsed ? 'is-sidebar-collapsed' : ''
+      }`.trim()}
+    >
       {/* Mobile Backdrop */}
       {mobileMenuOpen && (
         <div className="sidebar-backdrop" onClick={closeMobileMenu} aria-hidden="true" />
@@ -148,13 +161,29 @@ export default function AppShell() {
       {/* Sidebar Navigation */}
       <aside className={`app-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-logo-wrap">
-            <Dumbbell className="brand-icon" size={24} />
+          <div className="brand-logo-wrap" aria-hidden="true">
+            <Dumbbell className="brand-icon" size={18} strokeWidth={1.75} />
           </div>
-          <div className="brand-text">
-            <span className="brand-title">IRONCORE</span>
-            <span className="brand-subtitle">Gym Management</span>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="brand-text">
+              <span className="brand-title">IRONCORE</span>
+              <span className="brand-subtitle">
+                {isMemberPortal ? 'Member' : 'Gym Management'}
+              </span>
+            </div>
+          )}
+          {isMemberPortal && (
+            <button
+              type="button"
+              className="sidebar-collapse-btn"
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!sidebarCollapsed}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            </button>
+          )}
           <button
             className="mobile-close-btn"
             onClick={closeMobileMenu}
@@ -164,41 +193,41 @@ export default function AppShell() {
           </button>
         </div>
 
-        {/* Authenticated Role Workspace Welcome Banner (Replaces 4-button switcher) */}
-        <div className="sidebar-workspace-header">
-          <div className="workspace-welcome-badge">
-            <span className="welcome-role-tag">
-              {userRole === 'owner'
-                ? 'Owner Workspace'
-                : userRole === 'reception'
-                ? 'Reception Workspace'
-                : userRole === 'trainer'
-                ? 'Trainer Workspace'
-                : 'Member Workspace'}
-            </span>
+        {/* Non-member portals retain workspace banner until their dedicated redesign */}
+        {!isMemberPortal && (
+          <div className="sidebar-workspace-header">
+            <div className="workspace-welcome-badge">
+              <span className="welcome-role-tag">
+                {userRole === 'owner'
+                  ? 'Owner Workspace'
+                  : userRole === 'reception'
+                  ? 'Reception Workspace'
+                  : 'Trainer Workspace'}
+              </span>
+            </div>
+            <div className="workspace-greeting">
+              <span className="workspace-hello">
+                {userRole === 'owner'
+                  ? 'Welcome, Owner'
+                  : userRole === 'reception'
+                  ? 'Welcome, Reception'
+                  : 'Welcome, Trainer'}
+              </span>
+              <span className="workspace-user-name">{displayName}</span>
+            </div>
           </div>
-          <div className="workspace-greeting">
-            <span className="workspace-hello">
-              {userRole === 'owner'
-                ? 'Welcome, Owner'
-                : userRole === 'reception'
-                ? 'Welcome, Reception'
-                : userRole === 'trainer'
-                ? 'Welcome, Trainer'
-                : 'Welcome, Member'}
-            </span>
-            <span className="workspace-user-name">
-              {profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Fitness Member'}
-            </span>
-          </div>
-        </div>
+        )}
 
         {/* Navigation Links for Authenticated Role */}
-        <nav className="sidebar-nav">
-          <div className="nav-group-title">
-            <span>{currentNavGroup.label}</span>
-            <span className="badge badge-accent">{currentNavGroup.badge}</span>
-          </div>
+        <nav className="sidebar-nav" aria-label={currentNavGroup.label}>
+          {!sidebarCollapsed && (
+            <div className="nav-group-title">
+              <span>{isMemberPortal ? 'Navigation' : currentNavGroup.label}</span>
+              {!isMemberPortal && (
+                <span className="badge badge-accent">{currentNavGroup.badge}</span>
+              )}
+            </div>
+          )}
 
           <ul className="nav-list">
             {currentNavGroup.items.map((item) => {
@@ -208,10 +237,11 @@ export default function AppShell() {
                   <NavLink
                     to={item.to}
                     onClick={closeMobileMenu}
+                    title={sidebarCollapsed ? item.label : undefined}
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   >
-                    <Icon size={18} className="nav-icon" />
-                    <span className="nav-label">{item.label}</span>
+                    <Icon size={17} strokeWidth={1.65} className="nav-icon" />
+                    {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
                   </NavLink>
                 </li>
               );
@@ -221,14 +251,16 @@ export default function AppShell() {
           {!isAuthenticated && (
             <>
               <div className="nav-divider" />
-              <div className="nav-group-title">
-                <span>Account</span>
-              </div>
+              {!sidebarCollapsed && (
+                <div className="nav-group-title">
+                  <span>Account</span>
+                </div>
+              )}
               <ul className="nav-list">
                 <li className="nav-item">
                   <Link to="/login" onClick={closeMobileMenu} className="nav-link">
-                    <LogOut size={18} className="nav-icon" />
-                    <span className="nav-label">Sign In</span>
+                    <LogOut size={17} strokeWidth={1.65} className="nav-icon" />
+                    {!sidebarCollapsed && <span className="nav-label">Sign In</span>}
                   </Link>
                 </li>
               </ul>
@@ -238,19 +270,38 @@ export default function AppShell() {
 
         {/* Sidebar Footer */}
         <div className="sidebar-footer">
-          <div className="user-profile-badge">
-            <div className="avatar-circle">
-              <User size={16} />
+          {isMemberPortal ? (
+            <Link
+              to="/member/profile"
+              onClick={closeMobileMenu}
+              className="user-profile-badge user-profile-link"
+              title={sidebarCollapsed ? `${displayName} — My Membership` : undefined}
+            >
+              <div className="avatar-circle is-member-avatar">{memberInitial}</div>
+              {!sidebarCollapsed && (
+                <div className="user-info">
+                  <span className="user-name">{displayName}</span>
+                  <span className="user-email-meta">
+                    {profile?.email || user?.email || 'Member account'}
+                  </span>
+                </div>
+              )}
+            </Link>
+          ) : (
+            <div className="user-profile-badge">
+              <div className="avatar-circle">
+                <User size={16} />
+              </div>
+              <div className="user-info">
+                <span className="user-name">
+                  {profile?.displayName || user?.displayName || user?.email || 'Member'}
+                </span>
+                <span className="user-role-tag">
+                  {isAuthenticated ? userRole.toUpperCase() : 'VISITOR'}
+                </span>
+              </div>
             </div>
-            <div className="user-info">
-              <span className="user-name">
-                {profile?.displayName || user?.displayName || user?.email || 'Member'}
-              </span>
-              <span className="user-role-tag">
-                {isAuthenticated ? userRole.toUpperCase() : 'VISITOR'}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </aside>
 
@@ -264,14 +315,26 @@ export default function AppShell() {
               onClick={toggleMobileMenu}
               aria-label="Toggle navigation menu"
             >
-              <Menu size={22} />
+              <Menu size={20} strokeWidth={1.75} />
             </button>
             <div className="header-breadcrumbs">
-              <span className="breadcrumb-root">Gym</span>
-              <ChevronRight size={14} className="breadcrumb-sep" />
-              <span className="breadcrumb-role">{currentNavGroup.badge}</span>
-              <ChevronRight size={14} className="breadcrumb-sep" />
-              <span className="breadcrumb-current">{currentTitle}</span>
+              {isMemberPortal ? (
+                <>
+                  <Link to="/member/profile" className="breadcrumb-root">
+                    IRONCORE
+                  </Link>
+                  <ChevronRight size={14} className="breadcrumb-sep" />
+                  <span className="breadcrumb-current">{currentTitle}</span>
+                </>
+              ) : (
+                <>
+                  <span className="breadcrumb-root">Gym</span>
+                  <ChevronRight size={14} className="breadcrumb-sep" />
+                  <span className="breadcrumb-role">{currentNavGroup.badge}</span>
+                  <ChevronRight size={14} className="breadcrumb-sep" />
+                  <span className="breadcrumb-current">{currentTitle}</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -279,12 +342,12 @@ export default function AppShell() {
             {canPromptInstall && (
               <button
                 type="button"
-                className="btn btn-secondary header-login-btn"
+                className="btn btn-secondary btn-sm header-login-btn"
                 onClick={promptInstall}
                 disabled={isPrompting}
                 aria-label="Install IRONCORE app"
               >
-                <Download size={15} />
+                <Download size={15} strokeWidth={1.65} />
                 <span>Install</span>
               </button>
             )}
@@ -294,15 +357,37 @@ export default function AppShell() {
                 {!isOnline ? 'Offline' : isAuthenticated ? 'Online' : 'Signed out'}
               </span>
             </div>
-            <button className="icon-btn" aria-label="Notifications">
-              <Bell size={18} />
-            </button>
+            <div className="header-notification-wrap">
+              <button
+                type="button"
+                className={`icon-btn ${notificationsOpen ? 'is-open' : ''}`}
+                aria-label="Notifications"
+                aria-expanded={notificationsOpen}
+                onClick={() =>
+                  setNotificationsPath((prev) =>
+                    prev === location.pathname ? null : location.pathname
+                  )
+                }
+              >
+                <Bell size={16} strokeWidth={1.65} />
+              </button>
+              {notificationsOpen && (
+                <div className="header-popover" role="dialog" aria-label="Notifications">
+                  <div className="header-popover-title">Notifications</div>
+                  <p className="header-popover-empty">
+                    {isOnline
+                      ? 'You are caught up. No unread gym alerts right now.'
+                      : 'Connection offline. Check-in and payment alerts pause until online.'}
+                  </p>
+                </div>
+              )}
+            </div>
             <button
               type="button"
-              className="btn btn-secondary header-login-btn"
+              className="btn btn-secondary btn-sm header-login-btn"
               onClick={handleLogout}
             >
-              <LogOut size={16} />
+              <LogOut size={15} strokeWidth={1.65} />
               <span>Log out</span>
             </button>
           </div>

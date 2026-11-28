@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import QrAttendancePage from '../pages/member/QrAttendancePage';
 import { AuthContext } from '../context/AuthContext';
 import * as attendanceService from '../services/attendanceService';
+import * as memberService from '../services/memberService';
 
 // Mock network calls of attendanceService while preserving utility calculations
 vi.mock('../services/attendanceService', async () => {
@@ -18,6 +19,10 @@ vi.mock('../services/attendanceService', async () => {
     getMyAttendance: vi.fn(),
   };
 });
+
+vi.mock('../services/memberService', () => ({
+  getMyMembership: vi.fn(),
+}));
 
 // Mock html5-qrcode
 const mockStart = vi.fn().mockResolvedValue(undefined);
@@ -115,6 +120,29 @@ describe('QrAttendancePage — Member QR Scanner & Attendance History (Day 18 Ta
     mockStart.mockResolvedValue(undefined);
     attendanceService.checkInAttendance.mockResolvedValue(mockCheckInSuccess);
     attendanceService.getMyAttendance.mockResolvedValue(mockHistoryRecords);
+    memberService.getMyMembership.mockResolvedValue({
+      status: 'active',
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      isExpired: false,
+    });
+  });
+
+  it('marks dates prior to membership activation as Pre-plan instead of Missed', async () => {
+    attendanceService.getMyAttendance.mockResolvedValueOnce([]);
+    memberService.getMyMembership.mockResolvedValueOnce({
+      status: 'active',
+      startDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+      endDate: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000).toISOString(),
+      isExpired: false,
+    });
+
+    renderWithAuth(<QrAttendancePage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Pre-plan').length).toBeGreaterThanOrEqual(1);
+    });
+    expect(screen.queryByText('Missed')).not.toBeInTheDocument();
   });
 
   it('renders branding header, streak summary stats and weekly calendar', async () => {
@@ -146,11 +174,18 @@ describe('QrAttendancePage — Member QR Scanner & Attendance History (Day 18 Ta
     });
   });
 
-  it('initializes Html5Qrcode camera scanner on mount in scanner view', async () => {
+  it('does not request camera on mount and starts scanner only after clicking Start QR Scanner', async () => {
     renderWithAuth(<QrAttendancePage />);
+
+    const startBtn = screen.getByRole('button', { name: /start qr scanner/i });
+    expect(startBtn).toBeInTheDocument();
+    expect(mockStart).not.toHaveBeenCalled();
+
+    fireEvent.click(startBtn);
 
     await waitFor(() => {
       expect(mockStart).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: /stop scanner/i })).toBeInTheDocument();
     });
   });
 
@@ -190,7 +225,7 @@ describe('QrAttendancePage — Member QR Scanner & Attendance History (Day 18 Ta
 
     await waitFor(() => {
       expect(screen.getByText(/Workout Check-In History/i)).toBeInTheDocument();
-      expect(screen.getByText(/Verified timestamps recorded at FitMax entrance gateway/i)).toBeInTheDocument();
+      expect(screen.getByText(/Verified timestamps recorded at IRONCORE entrance gateway/i)).toBeInTheDocument();
       expect(screen.getByText(/Streak Day 3/i)).toBeInTheDocument();
       expect(screen.getByText(/Streak Day 2/i)).toBeInTheDocument();
     });
@@ -202,6 +237,8 @@ describe('QrAttendancePage — Member QR Scanner & Attendance History (Day 18 Ta
     mockStart.mockRejectedValueOnce(permError);
 
     renderWithAuth(<QrAttendancePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /start qr scanner/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Camera Permission Denied/i)).toBeInTheDocument();

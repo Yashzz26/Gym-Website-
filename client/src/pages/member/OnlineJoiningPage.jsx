@@ -2,16 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CreditCard,
-  CheckCircle2,
-  Clock,
   ArrowRight,
   ArrowLeft,
   Check,
   AlertCircle,
   RefreshCw,
-  XCircle,
   QrCode,
-  ShieldCheck,
+  CheckCircle2,
+  Clock,
+  XCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { listPlans } from '../../services/planService';
@@ -21,6 +20,16 @@ import {
   verifyRazorpayPayment,
   loadRazorpayScript,
 } from '../../services/paymentService';
+import {
+  PageHeader,
+  StatusTag,
+  StatePanel,
+} from '../../components/member/MemberUI';
+import {
+  formatInrFromPaise,
+  formatDisplayDate,
+  formatPaymentMethod,
+} from '../../utils/memberFormat';
 import './OnlineJoiningPage.css';
 
 export default function OnlineJoiningPage() {
@@ -44,7 +53,7 @@ export default function OnlineJoiningPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Razorpay Checkout UI States: 'idle' | 'opening' | 'success' | 'failed'
+  // Razorpay Checkout UI States: 'idle' | 'opening' | 'verifying' | 'success' | 'failed'
   const [checkoutStatus, setCheckoutStatus] = useState('idle');
   const [checkoutDetails, setCheckoutDetails] = useState(null);
   const [checkoutError, setCheckoutError] = useState('');
@@ -57,13 +66,11 @@ export default function OnlineJoiningPage() {
         setLoading(true);
         const token = user ? await user.getIdToken() : null;
 
-        // 1. Fetch available active plans
         const fetchedPlans = await listPlans({ activeOnly: true }, token);
         if (!cancelled) {
           setPlans(fetchedPlans || []);
         }
 
-        // 2. Fetch existing membership if authenticated
         if (token) {
           const existing = await getMyMembership(token);
           if (!cancelled && existing) {
@@ -88,7 +95,6 @@ export default function OnlineJoiningPage() {
     };
   }, [user]);
 
-  // Pre-fill phone if available in profile
   useEffect(() => {
     if (profile?.phone && !formData.phone) {
       setFormData((prev) => ({ ...prev, phone: profile.phone }));
@@ -138,6 +144,7 @@ export default function OnlineJoiningPage() {
     setSelectedPlan(null);
     setCurrentMembership(null);
     setStep(1);
+    setBrowsingPlans(true);
     setError('');
     setCheckoutStatus('idle');
     setCheckoutDetails(null);
@@ -151,22 +158,20 @@ export default function OnlineJoiningPage() {
 
     try {
       const token = user ? await user.getIdToken() : null;
-
-      // 1. Create server-side order with strictly server-verified price
       const orderData = await createRazorpayOrder({ planId: currentMembership.planId }, token);
 
-      // 2. Ensure Razorpay Checkout SDK is available
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded || typeof window.Razorpay === 'undefined') {
-        throw new Error('Razorpay checkout SDK could not be loaded. Please check your internet connection.');
+        throw new Error(
+          'Razorpay checkout SDK could not be loaded. Please check your internet connection.'
+        );
       }
 
-      // 3. Configure Checkout options
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'FitMax Gym',
+        name: 'IRONCORE Gym',
         description: `${orderData.plan.name} Membership`,
         order_id: orderData.orderId,
         prefill: {
@@ -175,7 +180,7 @@ export default function OnlineJoiningPage() {
           contact: profile?.phone || formData.phone || '',
         },
         theme: {
-          color: '#0066ff',
+          color: '#0284c7',
         },
         handler: async function (response) {
           try {
@@ -224,233 +229,310 @@ export default function OnlineJoiningPage() {
     }
   };
 
+  const hasActiveMembership =
+    currentMembership?.status === 'active' && !currentMembership?.isExpired;
+  const hasExpiredMembership = Boolean(
+    currentMembership &&
+      (currentMembership.status === 'expired' || currentMembership.isExpired)
+  );
+  const showActiveSummary = step === 1 && !browsingPlans && hasActiveMembership;
+  const showExpiredNotice = step === 1 && !browsingPlans && hasExpiredMembership;
+  const showPlansView = step === 1 && !showActiveSummary;
+  const showStepper = !showActiveSummary && !showExpiredNotice;
+
+  const headerTitle = showActiveSummary
+    ? 'Active Membership'
+    : showExpiredNotice
+      ? 'Membership Renewal'
+      : step === 3
+        ? 'Complete Enrollment'
+        : 'Choose Your Fitness Journey';
+
+  const headerSubtitle = showActiveSummary
+    ? 'Your active plan details, validity period, and gym check-in shortcuts.'
+    : showExpiredNotice
+      ? 'Your previous membership period has ended. Select a plan below or renew from your profile.'
+      : step === 3
+        ? 'Review your reserved plan and complete online verification.'
+        : 'Compare available plans, confirm your contact details, and activate gym access.';
+
   return (
-    <div className="online-joining-page">
-      {/* Header */}
-      <div className="joining-header">
-        <h1 className="joining-title">Choose Your Fitness Journey</h1>
-        <p className="joining-subtitle">
-          Select an official membership plan, review your onboarding details, and complete your registration with guaranteed transparent pricing.
-        </p>
-
-        {/* Stepper */}
-        <div className="joining-stepper">
-          <div className={`step-item ${step >= 1 ? 'active' : ''}`}>
-            <span className="step-number">1</span>
-            <span>Select Plan</span>
-          </div>
-          <div className="step-connector" />
-          <div className={`step-item ${step >= 2 ? 'active' : ''}`}>
-            <span className="step-number">2</span>
-            <span>Confirm Details</span>
-          </div>
-          <div className="step-connector" />
-          <div className={`step-item ${step >= 3 ? 'active' : ''}`}>
-            <span className="step-number">3</span>
-            <span>Pending Payment</span>
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div
-          role="alert"
-          style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '10px',
-            padding: '12px 16px',
-            color: '#f87171',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            maxWidth: '650px',
-            margin: '0 auto',
-            width: '100%',
-          }}
-        >
-          <AlertCircle size={18} style={{ flexShrink: 0 }} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* ACTIVE MEMBERSHIP STATUS VIEW */}
-      {step === 1 && !browsingPlans && currentMembership?.status === 'active' && !currentMembership?.isExpired && (
-        <div className="payment-success-card active-membership-notice" role="status">
-          <div className="success-icon-circle">
-            <CheckCircle2 size={32} />
-          </div>
-
-          <div>
-            <span className="success-status-badge">
-              <ShieldCheck size={14} /> Membership Active
-            </span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
-              Your Membership Is Active
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: '0 auto' }}>
-              Your {currentMembership.planName || 'Gym Membership'} plan is verified and active. You can scan the entrance QR code at reception to check in.
-            </p>
-          </div>
-
-          <div className="pending-details-box">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Active Plan:</span>
-              <strong style={{ color: '#ffffff' }}>{currentMembership.planName || 'Membership Plan'}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Status:</span>
-              <span style={{ color: '#4ade80', fontWeight: 600 }}>Active</span>
-            </div>
-            {currentMembership.endDate && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                <span style={{ color: 'var(--color-text-secondary)' }}>Valid Until:</span>
-                <span>
-                  {new Date(currentMembership.endDate).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                  {typeof currentMembership.daysRemaining === 'number'
-                    ? ` (${currentMembership.daysRemaining} days remaining)`
-                    : ''}
-                </span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Payment Method:</span>
-              <span style={{ textTransform: 'uppercase' }}>{currentMembership.paymentMethod || 'Recorded'}</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link to="/member/attendance" className="btn btn-primary">
-              <QrCode size={16} />
-              <span>Scan QR Attendance</span>
-            </Link>
-            <Link to="/member/profile" className="btn btn-secondary">
-              <ArrowRight size={16} />
-              <span>My Membership &amp; History</span>
-            </Link>
+    <div className="member-page">
+      <PageHeader
+        title={headerTitle}
+        subtitle={headerSubtitle}
+        actions={
+          browsingPlans && hasActiveMembership && step === 1 ? (
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={() => setBrowsingPlans(true)}
+              className="btn btn-secondary btn-sm"
+              onClick={() => setBrowsingPlans(false)}
             >
-              <span>Browse Plans</span>
+              <ArrowLeft size={15} />
+              <span>Back to Active Plan</span>
             </button>
+          ) : null
+        }
+      />
+
+      {showStepper && (
+        <nav className="joining-stepper" aria-label="Enrollment steps">
+          <div className={`joining-step ${step >= 1 ? 'is-active' : ''} ${step > 1 ? 'is-done' : ''}`}>
+            <span className="joining-step-num tabular-nums">1</span>
+            <span>Select Plan</span>
+          </div>
+          <div className="joining-step-line" aria-hidden="true" />
+          <div className={`joining-step ${step >= 2 ? 'is-active' : ''} ${step > 2 ? 'is-done' : ''}`}>
+            <span className="joining-step-num tabular-nums">2</span>
+            <span>Confirm Details</span>
+          </div>
+          <div className="joining-step-line" aria-hidden="true" />
+          <div className={`joining-step ${step >= 3 ? 'is-active' : ''}`}>
+            <span className="joining-step-num tabular-nums">3</span>
+            <span>Pending Payment</span>
+          </div>
+        </nav>
+      )}
+
+      {error && (
+        <div className="member-alert is-error" role="alert">
+          <div className="member-alert-body">
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
         </div>
       )}
 
-      {/* STEP 1: Plan Comparison Cards */}
-      {step === 1 && (browsingPlans || currentMembership?.status !== 'active' || currentMembership?.isExpired) && (
+      {/* STATE A: ACTIVE MEMBERSHIP SUMMARY (No stepper, balanced horizontal panel) */}
+      {showActiveSummary && (
+        <section className="member-panel active-membership-panel" role="status">
+          <div className="active-membership-grid">
+            <div className="active-membership-lead">
+              <StatusTag variant="success">Active</StatusTag>
+              <h2>Your Membership Is Active</h2>
+              <p>
+                Your {currentMembership.planName || 'Gym Membership'} plan is verified. Scan the
+                entrance QR code at reception when checking in for workouts.
+              </p>
+              <div className="active-membership-actions">
+                <Link to="/member/attendance" className="btn btn-primary">
+                  <QrCode size={16} />
+                  <span>Scan QR Attendance</span>
+                </Link>
+                <Link to="/member/profile" className="btn btn-secondary">
+                  <span>My Membership &amp; History</span>
+                  <ArrowRight size={16} />
+                </Link>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setBrowsingPlans(true)}
+                >
+                  <span>Browse Plans</span>
+                </button>
+              </div>
+            </div>
+
+            <dl className="joining-spec-list">
+              <div className="joining-spec-row">
+                <dt>Active Plan</dt>
+                <dd>{currentMembership.planName || 'Membership Plan'}</dd>
+              </div>
+              <div className="joining-spec-row">
+                <dt>Status</dt>
+                <dd className="is-success-value">Active</dd>
+              </div>
+              {currentMembership.endDate && (
+                <div className="joining-spec-row">
+                  <dt>Valid Until</dt>
+                  <dd className="tabular-nums">
+                    {formatDisplayDate(currentMembership.endDate)}
+                    {typeof currentMembership.daysRemaining === 'number'
+                      ? ` (${currentMembership.daysRemaining} days remaining)`
+                      : ''}
+                  </dd>
+                </div>
+              )}
+              <div className="joining-spec-row">
+                <dt>Payment Method</dt>
+                <dd>{formatPaymentMethod(currentMembership.paymentMethod)}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      )}
+
+      {/* STATE B: EXPIRED MEMBERSHIP NOTICE ABOVE PLAN GRID */}
+      {showExpiredNotice && (
+        <section className="member-panel expired-notice-panel" role="status">
+          <div className="expired-notice-content">
+            <div className="expired-notice-copy">
+              <StatusTag variant="danger">Expired</StatusTag>
+              <h2>Previous Plan Expired</h2>
+              <p>
+                {currentMembership.planName || 'Your membership'} ended on{' '}
+                <span className="tabular-nums">{formatDisplayDate(currentMembership.endDate)}</span>.
+                Renew on your membership page or choose a plan below.
+              </p>
+            </div>
+            <div className="expired-notice-actions">
+              <Link to="/member/profile" className="btn btn-primary">
+                <RefreshCw size={16} />
+                <span>Renew Existing Plan</span>
+              </Link>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setBrowsingPlans(true)}
+              >
+                <span>Compare All Plans</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* STEP 1: MEMBERSHIP PRICING COMPARISON GRID */}
+      {showPlansView && (
         <div>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
-              Loading membership plans…
-            </div>
+            <StatePanel
+              icon={RefreshCw}
+              spinIcon
+              title="Loading membership plans"
+              description="Retrieving active tiers and transparent pricing."
+            />
+          ) : plans.length === 0 ? (
+            <StatePanel
+              icon={CreditCard}
+              title="No Membership Plans Available"
+              description="No active plans are configured right now. Contact front desk reception for assistance."
+            />
           ) : (
-            <div className="plans-comparison-grid">
-              {plans.map((plan) => {
-                const isFeatured = plan.badge === 'Popular' || plan.badge === 'Best Value';
-                const formattedPrice = (plan.priceInPaise / 100).toLocaleString('en-IN');
+            (() => {
+              const recommendedPlan =
+                plans.find((p) => p.badge === 'Popular') ||
+                plans.find((p) => p.badge === 'Best Value') ||
+                null;
 
-                return (
-                  <div
-                    key={plan.planId}
-                    className={`joining-plan-card ${isFeatured ? 'featured' : ''}`}
-                  >
-                    {plan.badge && <span className="plan-badge-pill">{plan.badge}</span>}
+              return (
+                <div className="plans-comparison-grid">
+                  {plans.map((plan) => {
+                    const isFeatured = Boolean(
+                      recommendedPlan && plan.planId === recommendedPlan.planId
+                    );
+                    const formattedPrice = (plan.priceInPaise / 100).toLocaleString('en-IN');
+                    const monthsCount =
+                      plan.durationMonths || Math.max(1, Math.round(plan.durationDays / 30));
+                    const monthlyEquivalent = Math.round(
+                      plan.priceInPaise / 100 / monthsCount
+                    ).toLocaleString('en-IN');
 
-                    <div className="plan-card-header">
-                      <h3 className="plan-title-name">{plan.name}</h3>
-                      <span className="plan-duration-text">
-                        Valid for {plan.durationDays} Days ({plan.durationMonths || Math.round(plan.durationDays / 30)} Months)
-                      </span>
-                      <div className="plan-price-block">
-                        <span className="plan-currency">₹</span>
-                        <span className="plan-amount">{formattedPrice}</span>
-                        <span className="plan-period">/ total</span>
-                      </div>
-                    </div>
-
-                    <div className="plan-features-list">
-                      {plan.features?.map((feature, idx) => (
-                        <div key={idx} className="plan-feature-row">
-                          <Check size={16} className="plan-feature-icon" />
-                          <span>{feature}</span>
+                    return (
+                      <article
+                        key={plan.planId}
+                        className={`joining-plan-card ${isFeatured ? 'is-featured' : ''}`}
+                      >
+                        <div className="plan-card-top">
+                          <div className="plan-meta-slot">
+                            <span className="plan-duration-text tabular-nums">
+                              {plan.durationDays} days · {monthsCount}{' '}
+                              {monthsCount === 1 ? 'month' : 'months'}
+                            </span>
+                            {plan.badge && (
+                              <StatusTag variant={isFeatured ? 'accent' : 'neutral'}>
+                                {plan.badge}
+                              </StatusTag>
+                            )}
+                          </div>
+                          <h3 className="plan-title-name">{plan.name}</h3>
                         </div>
-                      ))}
-                    </div>
 
-                    <button
-                      type="button"
-                      className={`plan-select-btn ${isFeatured ? 'btn btn-primary' : 'btn btn-secondary'}`}
-                      onClick={() => handleSelectPlan(plan)}
-                    >
-                      <span>Choose {plan.name}</span>
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                        <div className="plan-price-stack">
+                          <div className="plan-price-block">
+                            <span className="plan-currency">₹</span>
+                            <span className="plan-amount tabular-nums">{formattedPrice}</span>
+                            <span className="plan-period">/ total</span>
+                          </div>
+                          <span className="plan-monthly-eq tabular-nums">
+                            ₹{monthlyEquivalent} / month equivalent
+                          </span>
+                        </div>
+
+                        <ul className="plan-features-list">
+                          {plan.features?.map((feature, idx) => (
+                            <li key={idx} className="plan-feature-row">
+                              <Check size={16} strokeWidth={1.75} className="plan-feature-icon" />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <button
+                          type="button"
+                          className={`btn ${isFeatured ? 'btn-primary' : 'btn-secondary'} plan-select-btn`}
+                          onClick={() => handleSelectPlan(plan)}
+                        >
+                          <span>Choose {plan.name}</span>
+                          <ArrowRight size={16} />
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              );
+            })()
           )}
         </div>
       )}
 
-      {/* STEP 2: Confirm Details & Review */}
+      {/* STEP 2: CONFIRM DETAILS & ORDER BREAKDOWN */}
       {step === 2 && selectedPlan && (
-        <div className="joining-confirm-card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '0.8125rem' }}
-              onClick={() => setStep(1)}
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Plans</span>
-            </button>
-            <span className="badge badge-accent">Selected: {selectedPlan.name}</span>
+        <section className="joining-step2-grid">
+          <div className="member-panel confirm-summary-panel">
+            <div className="confirm-summary-head">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setStep(1)}
+              >
+                <ArrowLeft size={15} />
+                <span>Back to Plans</span>
+              </button>
+              <StatusTag variant="accent">Selected: {selectedPlan.name}</StatusTag>
+            </div>
+
+            <div className="confirm-breakdown">
+              <h3>Order Breakdown</h3>
+              <dl className="joining-spec-list">
+                <div className="joining-spec-row">
+                  <dt>Membership Plan</dt>
+                  <dd>{selectedPlan.name}</dd>
+                </div>
+                <div className="joining-spec-row">
+                  <dt>Access Duration</dt>
+                  <dd className="tabular-nums">{selectedPlan.durationDays} Days</dd>
+                </div>
+                <div className="joining-spec-row">
+                  <dt>GST &amp; Facility Access</dt>
+                  <dd className="is-success-value">Included</dd>
+                </div>
+                <div className="joining-spec-row is-total">
+                  <dt>Total Payable</dt>
+                  <dd className="tabular-nums is-accent-value">
+                    {formatInrFromPaise(selectedPlan.priceInPaise)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
-          <div className="confirm-summary-box">
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.25rem' }}>
-              Order Breakdown
-            </h3>
-            <div className="summary-row">
-              <span>Membership Plan</span>
-              <strong style={{ color: '#ffffff' }}>{selectedPlan.name}</strong>
-            </div>
-            <div className="summary-row">
-              <span>Access Duration</span>
-              <span>{selectedPlan.durationDays} Days</span>
-            </div>
-            <div className="summary-row">
-              <span>GST &amp; Facility Access</span>
-              <span style={{ color: '#10b981' }}>Included</span>
-            </div>
-            <div className="summary-row total">
-              <span>Total Payable</span>
-              <span style={{ color: '#0080ff' }}>
-                ₹{(selectedPlan.priceInPaise / 100).toLocaleString('en-IN')}
-              </span>
-            </div>
-          </div>
+          <form className="member-panel joining-details-form" onSubmit={handleConfirmJoining}>
+            <h3>Member Information</h3>
 
-          <form onSubmit={handleConfirmJoining} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#ffffff' }}>
-              Member Information
-            </h4>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-4)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="confirm-phone" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                  Contact Phone Number *
-                </label>
+            <div className="joining-form-row">
+              <div className="joining-field">
+                <label htmlFor="confirm-phone">Contact Phone Number *</label>
                 <input
                   id="confirm-phone"
                   type="tel"
@@ -458,121 +540,91 @@ export default function OnlineJoiningPage() {
                   placeholder="+91 98765 43210"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  style={{
-                    height: '42px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-tertiary)',
-                    padding: '0 12px',
-                    color: 'var(--color-text-primary)',
-                    outline: 'none',
-                  }}
                 />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="confirm-emergency" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                  Emergency Contact Phone
-                </label>
+              <div className="joining-field">
+                <label htmlFor="confirm-emergency">Emergency Contact Phone</label>
                 <input
                   id="confirm-emergency"
                   type="tel"
                   placeholder="+91 98765 00000"
                   value={formData.emergencyPhone}
                   onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })}
-                  style={{
-                    height: '42px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-tertiary)',
-                    padding: '0 12px',
-                    color: 'var(--color-text-primary)',
-                    outline: 'none',
-                  }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label htmlFor="confirm-address" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                Address / City
-              </label>
+            <div className="joining-field">
+              <label htmlFor="confirm-address">Address / City</label>
               <input
                 id="confirm-address"
                 type="text"
-                placeholder="e.g. Pune, Maharashtra"
+                placeholder="City and state"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                style={{
-                  height: '42px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-border-default)',
-                  backgroundColor: 'var(--color-bg-tertiary)',
-                  padding: '0 12px',
-                  color: 'var(--color-text-primary)',
-                  outline: 'none',
-                }}
               />
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-              style={{ height: '48px', marginTop: '0.5rem', fontWeight: 600 }}
-            >
-              <CreditCard size={18} />
-              <span>{isSubmitting ? 'Recording Selection…' : 'Confirm Plan & Proceed'}</span>
-            </button>
+            <div className="joining-form-actions">
+              <button
+                type="submit"
+                className="btn btn-primary btn-lg"
+                disabled={isSubmitting}
+              >
+                <CreditCard size={16} />
+                <span>{isSubmitting ? 'Recording Selection…' : 'Confirm Plan & Proceed'}</span>
+              </button>
+            </div>
           </form>
-        </div>
+        </section>
       )}
 
-      {/* STEP 3: Razorpay Checkout & Pending/Success/Failure States */}
+      {/* STEP 3: PAYMENT CAPTURED — SIGNATURE PENDING */}
       {step === 3 && currentMembership && checkoutStatus === 'success' && checkoutDetails && (
-        <div className="payment-success-card" role="status">
-          <div className="success-icon-circle">
-            <CheckCircle2 size={32} />
-          </div>
-
-          <div>
-            <span className="success-status-badge">
-              Gateway Captured · Signature Pending Verification
-            </span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
-              Payment Captured at Razorpay
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: '0 auto' }}>
-              Your payment has been successfully recorded by Razorpay. Per security guidelines, membership access will automatically activate once signature and webhook verification confirm capture.
-            </p>
-          </div>
-
-          <div className="pending-details-box">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Payment Reference:</span>
-              <strong style={{ color: '#4ade80' }}>{checkoutDetails.paymentId}</strong>
+        <section className="member-panel checkout-state-panel is-success-border" role="status">
+          <div className="checkout-state-head">
+            <div className="checkout-state-icon is-success">
+              <CheckCircle2 size={20} />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Order ID:</span>
-              <span>{checkoutDetails.orderId}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Plan:</span>
-              <strong style={{ color: '#ffffff' }}>{checkoutDetails.planName}</strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Amount Captured:</span>
-              <strong style={{ color: '#0080ff' }}>
-                ₹{((checkoutDetails.amount || 0) / 100).toLocaleString('en-IN')}
-              </strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Activation Status:</span>
-              <span style={{ color: '#facc15', fontWeight: 600 }}>Awaiting Signature Capture</span>
+            <div>
+              <StatusTag variant="success">
+                Gateway Captured · Signature Pending Verification
+              </StatusTag>
+              <h2>Payment Captured at Razorpay</h2>
+              <p>
+                Payment recorded at Razorpay. Membership access activates automatically once
+                signature and webhook verification confirm capture.
+              </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <dl className="joining-spec-list">
+            <div className="joining-spec-row">
+              <dt>Payment Reference</dt>
+              <dd className="mono-ref is-success-value">{checkoutDetails.paymentId}</dd>
+            </div>
+            <div className="joining-spec-row">
+              <dt>Order ID</dt>
+              <dd className="mono-ref">{checkoutDetails.orderId}</dd>
+            </div>
+            <div className="joining-spec-row">
+              <dt>Plan</dt>
+              <dd>{checkoutDetails.planName}</dd>
+            </div>
+            <div className="joining-spec-row">
+              <dt>Amount Captured</dt>
+              <dd className="tabular-nums is-accent-value">
+                {formatInrFromPaise(checkoutDetails.amount)}
+              </dd>
+            </div>
+            <div className="joining-spec-row">
+              <dt>Activation Status</dt>
+              <dd className="is-warning-value">Awaiting Signature Capture</dd>
+            </div>
+          </dl>
+
+          <div className="checkout-state-actions">
             <button
               type="button"
               className="btn btn-secondary"
@@ -581,39 +633,27 @@ export default function OnlineJoiningPage() {
               <span>Back to Plans</span>
             </button>
           </div>
-        </div>
+        </section>
       )}
 
+      {/* STEP 3: CHECKOUT FAILED / DISMISSED */}
       {step === 3 && currentMembership && checkoutStatus === 'failed' && (
-        <div className="payment-failed-card" role="alert">
-          <div className="failed-icon-circle">
-            <XCircle size={32} />
+        <section className="member-panel checkout-state-panel is-danger-border" role="alert">
+          <div className="checkout-state-head">
+            <div className="checkout-state-icon is-danger">
+              <XCircle size={20} />
+            </div>
+            <div>
+              <StatusTag variant="danger">Checkout Notice</StatusTag>
+              <h2>Checkout Not Completed</h2>
+              <p>
+                {checkoutError ||
+                  'The Razorpay payment process was interrupted, declined, or closed.'}
+              </p>
+            </div>
           </div>
 
-          <div>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              color: '#f87171',
-              borderRadius: '999px',
-              padding: '4px 12px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-            }}>
-              Checkout Notice
-            </span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
-              Checkout Not Completed
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '500px', margin: '0 auto' }}>
-              {checkoutError || 'The Razorpay payment process was interrupted, declined, or closed.'}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div className="checkout-state-actions">
             <button
               type="button"
               className="btn btn-secondary"
@@ -631,76 +671,80 @@ export default function OnlineJoiningPage() {
               <span>Retry Online Payment</span>
             </button>
           </div>
-        </div>
+        </section>
       )}
 
-      {step === 3 && currentMembership && checkoutStatus !== 'success' && checkoutStatus !== 'failed' && (
-        <div className="payment-pending-card">
-          <div className="pending-icon-circle">
-            <Clock size={32} />
-          </div>
+      {/* STEP 3: PAYMENT PENDING */}
+      {step === 3 &&
+        currentMembership &&
+        checkoutStatus !== 'success' &&
+        checkoutStatus !== 'failed' && (
+          <section className="member-panel checkout-state-panel is-warning-border">
+            <div className="checkout-state-head">
+              <div className="checkout-state-icon is-warning">
+                <Clock size={20} />
+              </div>
+              <div>
+                <StatusTag variant="warning">
+                  Status: {currentMembership.status || 'payment_pending'}
+                </StatusTag>
+                <h2>Plan Selected — Awaiting Payment Verification</h2>
+                <p>
+                  Your membership selection has been reserved. Complete payment securely via
+                  Razorpay Checkout to activate access.
+                </p>
+              </div>
+            </div>
 
-          <div>
-            <span className="pending-status-badge">
-              Status: {currentMembership.status || 'payment_pending'}
-            </span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', margin: '0.75rem 0 0.5rem 0' }}>
-              Plan Selected — Awaiting Payment Verification
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '500px', margin: '0 auto' }}>
-              Your membership selection has been reserved. Complete payment securely via Razorpay Checkout to finalize your enrollment.
-            </p>
-          </div>
+            <dl className="joining-spec-list">
+              <div className="joining-spec-row">
+                <dt>Selected Plan</dt>
+                <dd>{currentMembership.planName}</dd>
+              </div>
+              <div className="joining-spec-row">
+                <dt>Validity Duration</dt>
+                <dd className="tabular-nums">{currentMembership.durationDays} Days</dd>
+              </div>
+              <div className="joining-spec-row">
+                <dt>Fee Amount Due</dt>
+                <dd className="tabular-nums is-accent-value">
+                  {formatInrFromPaise(currentMembership.priceInPaise)}
+                </dd>
+              </div>
+              <div className="joining-spec-row">
+                <dt>Payment Status</dt>
+                <dd className="is-warning-value">Awaiting Verification</dd>
+              </div>
+            </dl>
 
-          <div className="pending-details-box">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Selected Plan:</span>
-              <strong style={{ color: '#ffffff' }}>{currentMembership.planName}</strong>
+            <div className="checkout-state-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleResetPlanSelection}
+                disabled={checkoutStatus === 'opening'}
+              >
+                <RefreshCw size={16} />
+                <span>Choose Different Plan</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handlePayOnline}
+                disabled={checkoutStatus === 'opening' || checkoutStatus === 'verifying'}
+              >
+                <CreditCard size={16} />
+                <span>
+                  {checkoutStatus === 'opening'
+                    ? 'Opening Gateway…'
+                    : checkoutStatus === 'verifying'
+                      ? 'Verifying Signature…'
+                      : 'Pay Online via Razorpay'}
+                </span>
+              </button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Validity Duration:</span>
-              <span>{currentMembership.durationDays} Days</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Fee Amount Due:</span>
-              <strong style={{ color: '#0080ff' }}>
-                ₹{((currentMembership.priceInPaise || 0) / 100).toLocaleString('en-IN')}
-              </strong>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Payment Status:</span>
-              <span style={{ color: '#f59e0b', fontWeight: 600 }}>Awaiting Verification</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleResetPlanSelection}
-              disabled={checkoutStatus === 'opening'}
-            >
-              <RefreshCw size={16} />
-              <span>Choose Different Plan</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handlePayOnline}
-              disabled={checkoutStatus === 'opening' || checkoutStatus === 'verifying'}
-            >
-              <CreditCard size={16} />
-              <span>
-                {checkoutStatus === 'opening'
-                  ? 'Opening Gateway…'
-                  : checkoutStatus === 'verifying'
-                    ? 'Verifying Signature…'
-                    : 'Pay Online via Razorpay'}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
+          </section>
+        )}
     </div>
   );
 }

@@ -175,6 +175,21 @@ describe('WorkoutPlanPage (Day 20 Task 40)', () => {
 
     expect(screen.getByTestId('rest-day-state')).toBeInTheDocument();
     expect(screen.getByText('Rest & Recovery Day')).toBeInTheDocument();
+    expect(screen.getByText(/Wednesday — Pull Day - Back & Biceps/i)).toBeInTheDocument();
+  });
+
+  it('distinguishes no assigned workout plan from a scheduled rest day', async () => {
+    vi.spyOn(workoutService, 'getWorkoutPlans').mockResolvedValueOnce([]);
+
+    render(<WorkoutPlanPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('loading-state')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('no-plan-state')).toBeInTheDocument();
+    expect(screen.getByText('No Workout Plan Assigned')).toBeInTheDocument();
+    expect(screen.queryByTestId('weekday-tab-mon')).not.toBeInTheDocument();
   });
 
   it('opens completion modal and records workout log', async () => {

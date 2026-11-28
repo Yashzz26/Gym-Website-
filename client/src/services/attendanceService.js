@@ -152,15 +152,42 @@ export function calculateStreakFromRecords(records = []) {
 }
 
 /**
- * Generate weekly calendar (Monday to Sunday) mapped with attendance check-ins.
+ * Generate weekly calendar (Monday to Sunday) mapped with attendance check-ins
+ * and membership activation eligibility.
  *
  * @param {Array<Object>} records - Server attendance records
  * @param {Date} [referenceDate=new Date()]
+ * @param {Object|null|undefined} [membership=undefined] - Current membership (optional)
  * @returns {Object} { days: Array, attendedCount: number, completionPercent: number }
  */
-export function getWeeklyCalendar(records = [], referenceDate = new Date()) {
+export function getWeeklyCalendar(
+  records = [],
+  referenceDate = new Date(),
+  membership = undefined
+) {
   const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
   const todayStr = formatter.format(new Date());
+
+  let activationDateStr = null;
+  let expiryDateStr = null;
+  if (membership && membership.startDate) {
+    const startParsed = new Date(membership.startDate);
+    if (!Number.isNaN(startParsed.getTime())) {
+      activationDateStr = formatter.format(startParsed);
+    }
+  }
+  if (
+    membership &&
+    membership.endDate &&
+    (membership.isExpired || membership.status === 'expired')
+  ) {
+    const endParsed = new Date(membership.endDate);
+    if (!Number.isNaN(endParsed.getTime())) {
+      expiryDateStr = formatter.format(endParsed);
+    }
+  }
+  const hasNoActivePlan =
+    membership === null || (membership && membership.status === 'payment_pending');
 
   // Determine Monday of current week (ISO week: Monday = 0, Sunday = 6)
   const dayIndex = (referenceDate.getDay() + 6) % 7;
@@ -170,6 +197,7 @@ export function getWeeklyCalendar(records = [], referenceDate = new Date()) {
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = [];
   let attendedCount = 0;
+  let eligibleDaysCount = 0;
 
   for (let i = 0; i < 7; i++) {
     const targetDate = new Date(monday);
@@ -184,6 +212,26 @@ export function getWeeklyCalendar(records = [], referenceDate = new Date()) {
       attendedCount++;
     }
 
+    const isPreActivation = Boolean(activationDateStr && dateStr < activationDateStr);
+    const isPostExpiry = Boolean(expiryDateStr && dateStr > expiryDateStr);
+    const isIneligible =
+      !checkedIn &&
+      (isPreActivation || isPostExpiry || (hasNoActivePlan && dateStr <= todayStr));
+
+    if (!isPreActivation && !isPostExpiry && !hasNoActivePlan) {
+      eligibleDaysCount++;
+    }
+
+    const eligibilityStatus = checkedIn
+      ? 'attended'
+      : isIneligible
+        ? 'ineligible'
+        : dateStr > todayStr
+          ? 'upcoming'
+          : dateStr === todayStr
+            ? 'today'
+            : 'missed';
+
     days.push({
       dayIndex: i,
       dayName: dayNames[i],
@@ -195,10 +243,13 @@ export function getWeeklyCalendar(records = [], referenceDate = new Date()) {
       isToday: dateStr === todayStr,
       isPast: dateStr < todayStr,
       isFuture: dateStr > todayStr,
+      isIneligible,
+      eligibilityStatus,
     });
   }
 
-  const completionPercent = Math.round((attendedCount / 7) * 100);
+  const denominator = eligibleDaysCount > 0 ? eligibleDaysCount : 7;
+  const completionPercent = Math.round((attendedCount / denominator) * 100);
 
   return {
     days,

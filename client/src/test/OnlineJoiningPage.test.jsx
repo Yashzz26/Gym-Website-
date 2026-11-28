@@ -151,6 +151,25 @@ describe('OnlineJoiningPage — Member Online Plan Selection (Day 11 Task 22)', 
     expect(screen.getByText('1 Month Starter')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /scan qr attendance/i })).toHaveAttribute('href', '/member/attendance');
     expect(screen.getByRole('link', { name: /my membership/i })).toHaveAttribute('href', '/member/profile');
+    expect(screen.queryByLabelText(/enrollment steps/i)).not.toBeInTheDocument();
+  });
+
+  it('displays dedicated expired membership layout without onboarding stepper', async () => {
+    memberService.getMyMembership.mockResolvedValueOnce({
+      membershipId: 'existing-expired-1',
+      planName: '1 Month Starter',
+      durationDays: 30,
+      priceInPaise: 149900,
+      status: 'expired',
+      isExpired: true,
+      endDate: '2026-10-31T00:00:00.000Z',
+    });
+
+    renderWithAuth(<OnlineJoiningPage />);
+
+    expect(await screen.findByText(/previous plan expired/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /renew existing plan/i })).toHaveAttribute('href', '/member/profile');
+    expect(screen.queryByLabelText(/enrollment steps/i)).not.toBeInTheDocument();
   });
 
   it('integrates Razorpay Checkout: requests server order and shows success state on gateway response', async () => {

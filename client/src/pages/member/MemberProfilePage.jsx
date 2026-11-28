@@ -1,15 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  User,
-  Mail,
-  Phone,
-  ShieldCheck,
-  Calendar,
-  Clock,
   CreditCard,
   ArrowRight,
-  History,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
@@ -18,25 +11,30 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { getUserMemberships, renewMembership } from '../../services/membershipService';
 import { listPlans } from '../../services/planService';
+import {
+  PageHeader,
+  StatusTag,
+  ProgressBar,
+  StatePanel,
+} from '../../components/member/MemberUI';
+import {
+  formatInrFromPaise,
+  formatDisplayDate,
+  formatPaymentMethod,
+} from '../../utils/memberFormat';
 import './MemberProfilePage.css';
 
-function formatPrice(paise) {
-  if (typeof paise !== 'number') return '₹0';
-  return `₹${(paise / 100).toLocaleString('en-IN')}`;
+function getMembershipStatusVariant(status) {
+  if (status === 'active') return 'success';
+  if (status === 'payment_pending') return 'warning';
+  if (status === 'expired') return 'danger';
+  return 'neutral';
 }
 
-function formatDate(isoString) {
-  if (!isoString) return '—';
-  try {
-    const d = new Date(isoString);
-    return d.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  } catch {
-    return isoString;
-  }
+function formatStatusLabel(status) {
+  if (!status) return 'Unknown';
+  const normalized = String(status).replace(/_/g, ' ');
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 export default function MemberProfilePage() {
@@ -74,7 +72,6 @@ export default function MemberProfilePage() {
       const data = await getUserMemberships(targetUserId, token);
       setMembershipData(data || { activeMembership: null, history: [], totalMemberships: 0 });
 
-      // If active plan exists, default selectedPlanId to active planId
       if (data?.activeMembership?.planId) {
         setSelectedPlanId(data.activeMembership.planId);
       }
@@ -89,7 +86,6 @@ export default function MemberProfilePage() {
     loadData();
   }, [loadData]);
 
-  // Load plans when renewal box is opened
   const handleOpenRenewal = async () => {
     setShowRenewalBox(true);
     setSuccessMsg('');
@@ -129,7 +125,7 @@ export default function MemberProfilePage() {
         token
       );
 
-      setSuccessMsg('Membership renewed successfully! Validity extended.');
+      setSuccessMsg('Membership renewed and validity extended.');
       setShowRenewalBox(false);
       await loadData();
     } catch (err) {
@@ -140,250 +136,279 @@ export default function MemberProfilePage() {
   };
 
   const { activeMembership, history } = membershipData;
+  const effectiveSubStatus = activeMembership
+    ? activeMembership.isExpired && activeMembership.status !== 'payment_pending'
+      ? 'expired'
+      : activeMembership.status
+    : 'unregistered';
+
   const isExpiringSoon =
     activeMembership &&
-    activeMembership.status === 'active' &&
+    effectiveSubStatus === 'active' &&
     activeMembership.daysRemaining !== undefined &&
     activeMembership.daysRemaining <= 7;
 
-  // Calculate progress %
   let progressPercent = 0;
+  let totalDaysCount = activeMembership?.durationDays || 0;
   if (activeMembership?.startDate && activeMembership?.endDate) {
     const start = new Date(activeMembership.startDate).getTime();
     const end = new Date(activeMembership.endDate).getTime();
     const total = end - start;
     if (total > 0 && activeMembership.daysRemaining !== undefined) {
-      const totalDays = Math.max(1, Math.round(total / (1000 * 60 * 60 * 24)));
-      const daysPassed = Math.max(0, totalDays - activeMembership.daysRemaining);
-      progressPercent = Math.min(100, Math.round((daysPassed / totalDays) * 100));
+      totalDaysCount = Math.max(1, Math.round(total / (1000 * 60 * 60 * 24)));
+      const daysPassed = Math.max(0, totalDaysCount - activeMembership.daysRemaining);
+      progressPercent = Math.min(100, Math.round((daysPassed / totalDaysCount) * 100));
     }
   }
 
+  const displayName = profile?.displayName || user?.displayName || 'Gym Member';
+  const avatarInitial = displayName[0]?.toUpperCase() || 'M';
+  const accountStatus = profile?.approvalStatus || 'active';
+
   if (loading) {
     return (
-      <div className="member-profile-container" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-        <RefreshCw className="animate-spin" style={{ margin: '0 auto 1rem', color: 'var(--color-accent)' }} size={32} />
-        <p style={{ color: 'var(--color-text-secondary)' }}>Loading member profile & subscription details…</p>
+      <div className="member-page">
+        <PageHeader
+          title="My Membership"
+          subtitle="Account details, active plan validity, and renewal history"
+        />
+        <StatePanel
+          icon={RefreshCw}
+          spinIcon
+          title="Loading membership details"
+          description="Fetching your account profile and subscription records."
+        />
       </div>
     );
   }
 
   return (
-    <div className="member-profile-container">
-      <div className="profile-header">
-        <h1>Member Profile & Membership</h1>
-        <p>Manage your account, active subscription status, and full renewal history.</p>
-      </div>
+    <div className="member-page">
+      <PageHeader
+        title="My Membership"
+        subtitle="Account details, active plan validity, and renewal history"
+      />
 
       {successMsg && (
-        <div className="alert-box success">
-          <CheckCircle2 size={18} />
-          <span>{successMsg}</span>
+        <div className="member-alert is-success" role="status">
+          <div className="member-alert-body">
+            <CheckCircle2 size={16} />
+            <span>{successMsg}</span>
+          </div>
         </div>
       )}
 
       {error && (
-        <div className="alert-box error">
-          <AlertCircle size={18} />
-          <span>{error}</span>
+        <div className="member-alert is-error" role="alert">
+          <div className="member-alert-body">
+            <AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
-      <div className="profile-grid">
-        {/* Left Column: User Profile Overview */}
-        <div className="profile-card">
-          <div className="profile-avatar-row">
-            <div className="profile-avatar">
-              {(profile?.displayName || user?.displayName || 'M')[0].toUpperCase()}
+      <div className="membership-workspace-grid">
+        {/* Left Column: Member Identity & Information Rows */}
+        <aside className="member-panel profile-summary-panel" aria-label="Member Profile">
+          <div className="profile-identity-head">
+            <div className="profile-avatar-mark" aria-hidden="true">
+              {avatarInitial}
             </div>
-            <div className="profile-name-info">
-              <h2>{profile?.displayName || user?.displayName || 'Gym Member'}</h2>
-              <span className="profile-role-badge">
-                <ShieldCheck size={12} />
-                {profile?.role || 'member'}
-              </span>
+            <div className="profile-identity-text">
+              <h2 className="profile-display-name">{displayName}</h2>
+              <span className="profile-role-text">{profile?.role || 'member'}</span>
             </div>
           </div>
 
-          <div className="profile-details-list">
-            <div className="profile-detail-item">
-              <Mail size={16} />
-              <div className="profile-detail-content">
-                <span className="profile-detail-label">Email</span>
-                <span>{profile?.email || user?.email || '—'}</span>
-              </div>
+          <dl className="profile-info-list">
+            <div className="profile-info-row">
+              <dt>Email</dt>
+              <dd>{profile?.email || user?.email || '—'}</dd>
             </div>
 
-            <div className="profile-detail-item">
-              <Phone size={16} />
-              <div className="profile-detail-content">
-                <span className="profile-detail-label">Phone</span>
-                <span>{profile?.phone || 'Not provided'}</span>
-              </div>
+            <div className="profile-info-row">
+              <dt>Phone</dt>
+              <dd className="tabular-nums">{profile?.phone || 'Not provided'}</dd>
             </div>
 
-            <div className="profile-detail-item">
-              <User size={16} />
-              <div className="profile-detail-content">
-                <span className="profile-detail-label">Gender</span>
-                <span style={{ textTransform: 'capitalize' }}>{profile?.gender || 'Not specified'}</span>
-              </div>
+            <div className="profile-info-row">
+              <dt>Gender</dt>
+              <dd className="capitalize-text">{profile?.gender || 'Not specified'}</dd>
             </div>
 
             {profile?.emergencyContact && (
-              <div className="profile-detail-item">
-                <ShieldCheck size={16} />
-                <div className="profile-detail-content">
-                  <span className="profile-detail-label">Emergency Contact</span>
-                  <span>
-                    {profile.emergencyContact.name || 'Contact'} ({profile.emergencyContact.relation || 'Relative'}):{' '}
-                    {profile.emergencyContact.phone || '—'}
-                  </span>
-                </div>
+              <div className="profile-info-row">
+                <dt>Emergency contact</dt>
+                <dd>
+                  {profile.emergencyContact.name || 'Contact'} (
+                  {profile.emergencyContact.relation || 'Relative'}):{' '}
+                  {profile.emergencyContact.phone || '—'}
+                </dd>
               </div>
             )}
 
-            <div className="profile-detail-item">
-              <Calendar size={16} />
-              <div className="profile-detail-content">
-                <span className="profile-detail-label">Account Status</span>
-                <span style={{ textTransform: 'capitalize', color: profile?.approvalStatus === 'active' ? '#4ade80' : '#facc15' }}>
-                  {profile?.approvalStatus || 'Active'}
-                </span>
-              </div>
+            <div className="profile-info-row">
+              <dt>Account status</dt>
+              <dd>
+                <StatusTag variant={accountStatus === 'active' ? 'success' : 'warning'}>
+                  {formatStatusLabel(accountStatus)} account
+                </StatusTag>
+              </dd>
             </div>
-          </div>
-        </div>
+            <div className="profile-info-row">
+              <dt>Subscription status</dt>
+              <dd>
+                <StatusTag variant={getMembershipStatusVariant(effectiveSubStatus)}>
+                  {effectiveSubStatus === 'unregistered'
+                    ? 'Not enrolled'
+                    : formatStatusLabel(effectiveSubStatus)}
+                </StatusTag>
+              </dd>
+            </div>
+          </dl>
+        </aside>
 
-        {/* Right Column: Active Membership & Renewal History */}
-        <div className="membership-column">
-          {/* Active / Current Membership Card */}
+        {/* Right Column: Subscription Focus + Membership History */}
+        <div className="membership-main-column">
           {activeMembership ? (
-            <div className="active-membership-card">
-              <div className="card-top-row">
-                <div className="plan-title-area">
-                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>
-                    Current subscription
-                  </span>
-                  <h3>{activeMembership.planName || 'Gym Membership'}</h3>
-                  <div className="plan-price-tag">{formatPrice(activeMembership.priceInPaise)}</div>
+            <section className="member-panel subscription-focus-panel" aria-label="Current Membership">
+              <div className="subscription-head">
+                <div className="subscription-title-block">
+                  <span className="subscription-eyebrow">Current subscription</span>
+                  <div className="subscription-name-row">
+                    <h3>{activeMembership.planName || 'Gym Membership'}</h3>
+                    <StatusTag variant={getMembershipStatusVariant(effectiveSubStatus)}>
+                      {formatStatusLabel(effectiveSubStatus)}
+                    </StatusTag>
+                  </div>
                 </div>
-
-                <div>
-                  <span className={`status-badge ${activeMembership.status}`}>
-                    {activeMembership.status === 'active' && <CheckCircle2 size={14} />}
-                    {activeMembership.status === 'expired' && <AlertTriangle size={14} />}
-                    {activeMembership.status === 'payment_pending' && <Clock size={14} />}
-                    <span style={{ textTransform: 'capitalize' }}>
-                      {activeMembership.status.replace('_', ' ')}
-                    </span>
-                  </span>
+                <div className="subscription-price tabular-nums">
+                  {formatInrFromPaise(activeMembership.priceInPaise)}
                 </div>
               </div>
 
               {isExpiringSoon && (
-                <div className="alert-box error" style={{ marginBottom: '1rem' }}>
-                  <AlertTriangle size={18} />
-                  <span>Your membership expires in {activeMembership.daysRemaining} days. Renew now to keep uninterrupted access.</span>
+                <div className="member-alert is-warning" role="status">
+                  <div className="member-alert-body">
+                    <AlertTriangle size={16} />
+                    <span>
+                      Membership expires in {activeMembership.daysRemaining} days. Renew to keep uninterrupted gym access.
+                    </span>
+                  </div>
                 </div>
               )}
 
-              <div className="membership-stats-grid">
-                <div className="stat-item">
-                  <span className="stat-label">Start Date</span>
-                  <span className="stat-value">{formatDate(activeMembership.startDate)}</span>
+              {effectiveSubStatus === 'payment_pending' && (
+                <div className="member-alert is-warning" role="status">
+                  <div className="member-alert-body">
+                    <AlertCircle size={16} />
+                    <span>
+                      Payment verification is pending for this subscription. Complete online checkout or settle at reception.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => navigate('/member/join')}
+                  >
+                    <span>Complete Payment</span>
+                  </button>
+                </div>
+              )}
+
+              <dl className="subscription-metrics-grid">
+                <div className="subscription-metric-cell">
+                  <dt>Start date</dt>
+                  <dd className="tabular-nums no-wrap-date">
+                    {formatDisplayDate(activeMembership.startDate)}
+                  </dd>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">End Date / Expiry</span>
-                  <span className="stat-value">{formatDate(activeMembership.endDate)}</span>
+                <div className="subscription-metric-cell">
+                  <dt>Expiry date</dt>
+                  <dd className="tabular-nums no-wrap-date">
+                    {formatDisplayDate(activeMembership.endDate)}
+                  </dd>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">Days Remaining</span>
-                  <span className="stat-value highlight">
-                    {activeMembership.isExpired ? 'Expired' : `${activeMembership.daysRemaining || 0} days`}
-                  </span>
+                <div className="subscription-metric-cell">
+                  <dt>Remaining</dt>
+                  <dd
+                    className={`tabular-nums ${
+                      activeMembership.isExpired ? 'is-expired-text' : 'is-highlight-text'
+                    }`}
+                  >
+                    {activeMembership.isExpired
+                      ? 'Expired'
+                      : `${activeMembership.daysRemaining ?? 0} days`}
+                  </dd>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">Payment Method</span>
-                  <span className="stat-value" style={{ textTransform: 'capitalize' }}>
-                    {activeMembership.paymentMethod || 'Online'}
-                  </span>
+                <div className="subscription-metric-cell">
+                  <dt>Payment method</dt>
+                  <dd>{formatPaymentMethod(activeMembership.paymentMethod)}</dd>
                 </div>
-              </div>
+              </dl>
 
-              {/* Progress Bar */}
-              <div className="progress-container">
-                <div className="progress-header">
-                  <span>Membership Period Progress</span>
-                  <span>{progressPercent}% Elapsed</span>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-bar" style={{ width: `${progressPercent}%` }} />
-                </div>
-              </div>
+              <ProgressBar
+                label="Membership Period Progress"
+                value={progressPercent}
+                valueText={
+                  totalDaysCount > 0
+                    ? `${progressPercent}% elapsed · ${totalDaysCount}d cycle`
+                    : `${progressPercent}% elapsed`
+                }
+                variant={isExpiringSoon ? 'warning' : 'accent'}
+              />
 
-              {/* Card Actions */}
-              <div className="membership-card-actions">
+              <div className="subscription-actions-row">
                 <button
                   type="button"
-                  className="btn-primary"
+                  className="btn btn-primary"
                   onClick={handleOpenRenewal}
+                  disabled={renewing}
                 >
                   <RefreshCw size={16} />
-                  Renew / Extend Membership
+                  <span>Renew / Extend Membership</span>
                 </button>
               </div>
 
-              {/* Interactive Renewal Box */}
               {showRenewalBox && (
-                <form className="renewal-box" onSubmit={handleConfirmRenewal}>
-                  <h4>
-                    <RefreshCw size={18} />
-                    Choose Plan & Renew Membership
-                  </h4>
-                  <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                    Renewing now extends your validity seamlessly from your current expiry date.
-                  </p>
-
-                  <div className="renewal-plans-row">
-                    {availablePlans.map((plan) => (
-                      <div
-                        key={plan.planId}
-                        className={`renewal-plan-option ${selectedPlanId === plan.planId ? 'selected' : ''}`}
-                        onClick={() => setSelectedPlanId(plan.planId)}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <strong style={{ color: 'var(--color-text-primary)' }}>{plan.name}</strong>
-                        <span style={{ color: 'var(--color-accent-light)', fontWeight: 'var(--font-weight-semibold)' }}>
-                          {formatPrice(plan.priceInPaise)}
-                        </span>
-                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                          {plan.durationDays} Days Duration
-                        </span>
-                      </div>
-                    ))}
+                <form className="renewal-drawer" onSubmit={handleConfirmRenewal}>
+                  <div className="renewal-drawer-head">
+                    <h4>Choose Plan &amp; Renew Membership</h4>
+                    <p>Extends validity seamlessly from your current expiry date.</p>
                   </div>
 
-                  <div style={{ margin: '1rem 0' }}>
-                    <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>
-                      Payment Method
-                    </label>
+                  <div className="renewal-plans-grid">
+                    {availablePlans.map((plan) => {
+                      const isSelected = selectedPlanId === plan.planId;
+                      return (
+                        <button
+                          key={plan.planId}
+                          type="button"
+                          className={`renewal-plan-choice ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => setSelectedPlanId(plan.planId)}
+                          aria-pressed={isSelected}
+                        >
+                          <span className="renewal-plan-name">{plan.name}</span>
+                          <span className="renewal-plan-price tabular-nums">
+                            {formatInrFromPaise(plan.priceInPaise)}
+                          </span>
+                          <span className="renewal-plan-duration tabular-nums">
+                            {plan.durationDays} days
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="renewal-payment-row">
+                    <label htmlFor="renewal-payment-method">Payment method</label>
                     <select
+                      id="renewal-payment-method"
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      style={{
-                        background: 'var(--color-bg-tertiary)',
-                        color: 'var(--color-text-primary)',
-                        border: '1px solid var(--color-border-default)',
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: 'var(--radius-md)',
-                        width: '100%',
-                        maxWidth: '240px',
-                      }}
                     >
                       <option value="online">Online Payment (Card/UPI)</option>
                       <option value="cash">Cash at Reception</option>
@@ -391,17 +416,17 @@ export default function MemberProfilePage() {
                     </select>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
+                  <div className="renewal-drawer-actions">
                     <button
                       type="submit"
-                      className="btn-primary"
+                      className="btn btn-primary"
                       disabled={renewing || !selectedPlanId}
                     >
                       {renewing ? 'Processing Renewal…' : 'Confirm & Renew Now'}
                     </button>
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn btn-secondary"
                       onClick={() => setShowRenewalBox(false)}
                       disabled={renewing}
                     >
@@ -410,90 +435,86 @@ export default function MemberProfilePage() {
                   </div>
                 </form>
               )}
-            </div>
+            </section>
           ) : (
-            <div className="empty-membership-box">
-              <CreditCard size={48} style={{ color: 'var(--color-accent)' }} />
-              <h3>No Active Membership Found</h3>
-              <p>
-                You do not have an active gym membership at the moment. Explore our membership tiers
-                and start your fitness journey today!
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => navigate('/member/join')}
-              >
-                <span>Choose Membership Plan</span>
-                <ArrowRight size={16} />
-              </button>
-            </div>
+            <StatePanel
+              icon={CreditCard}
+              title="No Active Membership Found"
+              description="You do not have an active gym membership right now. Compare plans and complete enrollment online."
+              action={
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => navigate('/member/join')}
+                >
+                  <span>Choose Membership Plan</span>
+                  <ArrowRight size={16} />
+                </button>
+              }
+            />
           )}
 
-          {/* Renewal & Membership History Timeline */}
-          <div className="history-section">
-            <div className="history-header">
-              <h3>
-                <History size={20} style={{ color: 'var(--color-accent)' }} />
-                Membership & Renewal History
-              </h3>
-              <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+          {/* Membership & Renewal History */}
+          <section className="member-panel history-panel" aria-label="Membership History">
+            <div className="member-section-header">
+              <h3 className="member-section-title">Membership &amp; Renewal History</h3>
+              <span className="member-section-meta tabular-nums">
                 {history.length} {history.length === 1 ? 'Period' : 'Periods'} Recorded
               </span>
             </div>
 
             {history.length > 0 ? (
-              <div className="history-timeline">
-                {history.map((record) => (
-                  <div key={record.membershipId} className="timeline-item">
-                    <div className={`timeline-dot ${record.status === 'active' ? 'active' : ''}`} />
-                    <div className="timeline-content-top">
-                      <div className="timeline-plan-title">
-                        {record.planName || 'Gym Plan'}
-                        {record.renewedFrom && (
-                          <span className="renewed-badge">
-                            Renewed from #{record.renewedFrom.slice(-6)}
-                          </span>
-                        )}
-                      </div>
-                      <span className={`status-badge ${record.status}`}>
-                        <span style={{ textTransform: 'capitalize' }}>
-                          {record.status.replace('_', ' ')}
-                        </span>
-                      </span>
-                    </div>
-
-                    <div className="timeline-details">
-                      <div>
-                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Period</span>
-                        <span>{formatDate(record.startDate)} – {formatDate(record.endDate)}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Duration</span>
-                        <span>{record.durationDays} Days</span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Fee</span>
-                        <span style={{ color: 'var(--color-accent-light)', fontWeight: 'var(--font-weight-semibold)' }}>
-                          {formatPrice(record.priceInPaise)}
-                        </span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Method</span>
-                        <span style={{ textTransform: 'capitalize' }}>
-                          {record.paymentMethod || 'Online'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="history-table-wrap">
+                <table className="history-table">
+                  <thead>
+                    <tr>
+                      <th>Plan</th>
+                      <th>Period</th>
+                      <th>Duration</th>
+                      <th className="align-right">Amount</th>
+                      <th>Method</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((record) => (
+                      <tr key={record.membershipId}>
+                        <td data-label="Plan">
+                          <div className="history-plan-cell">
+                            <span className="history-plan-name">
+                              {record.planName || 'Gym Plan'}
+                            </span>
+                            {record.renewedFrom && (
+                              <span className="history-renewed-ref">
+                                Renewed from #{record.renewedFrom.slice(-6)}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td data-label="Period" className="tabular-nums no-wrap-date">
+                          {formatDisplayDate(record.startDate)} – {formatDisplayDate(record.endDate)}
+                        </td>
+                        <td data-label="Duration" className="tabular-nums">
+                          {record.durationDays} days
+                        </td>
+                        <td data-label="Amount" className="align-right tabular-nums history-amount">
+                          {formatInrFromPaise(record.priceInPaise)}
+                        </td>
+                        <td data-label="Method">{formatPaymentMethod(record.paymentMethod)}</td>
+                        <td data-label="Status">
+                          <StatusTag variant={getMembershipStatusVariant(record.status)}>
+                            {formatStatusLabel(record.status)}
+                          </StatusTag>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
-                No prior membership periods on record.
-              </p>
+              <p className="history-empty-note">No prior membership periods on record.</p>
             )}
-          </div>
+          </section>
         </div>
       </div>
     </div>

@@ -5,16 +5,25 @@ import {
   Circle,
   Calendar,
   Clock,
-  Flame,
   ExternalLink,
   Award,
   AlertCircle,
   RefreshCw,
-  User,
-  Activity,
+  ArrowRight,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getWorkoutPlans, logWorkoutCompletion, getWorkoutLogs } from '../../services/workoutService';
+import {
+  getWorkoutPlans,
+  logWorkoutCompletion,
+  getWorkoutLogs,
+} from '../../services/workoutService';
+import {
+  PageHeader,
+  StatusTag,
+  ProgressBar,
+  StatePanel,
+} from '../../components/member/MemberUI';
 import './WorkoutPlanPage.css';
 
 const WEEKDAYS = [
@@ -28,7 +37,7 @@ const WEEKDAYS = [
 ];
 
 function getTodayWeekdayKey() {
-  const dayIndex = new Date().getDay(); // 0 is Sunday, 1 is Monday...
+  const dayIndex = new Date().getDay();
   const map = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   return map[dayIndex] || 'mon';
 }
@@ -37,8 +46,16 @@ function getTodayIsoDate() {
   return new Date().toISOString().split('T')[0];
 }
 
+function getIsoDateWeekdayKey(isoDate) {
+  if (!isoDate) return null;
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const map = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  return map[d.getDay()] || null;
+}
+
 export default function WorkoutPlanPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const todayKey = useMemo(() => getTodayWeekdayKey(), []);
   const todayDate = useMemo(() => getTodayIsoDate(), []);
 
@@ -67,8 +84,8 @@ export default function WorkoutPlanPage() {
         getWorkoutPlans(token, { memberId: user.uid }),
         getWorkoutLogs(token, { memberId: user.uid, limit: 14 }),
       ]);
-      setPlans(plansData);
-      setLogs(logsData);
+      setPlans(Array.isArray(plansData) ? plansData : []);
+      setLogs(Array.isArray(logsData) ? logsData : []);
     } catch (err) {
       setError(err.message || 'Failed to load workout details');
     } finally {
@@ -80,7 +97,6 @@ export default function WorkoutPlanPage() {
     fetchWorkoutData();
   }, [fetchWorkoutData]);
 
-  // Current active plan for selected weekday
   const currentPlan = useMemo(() => {
     return (
       plans.find((p) => p.weekDay === selectedDay) ||
@@ -89,24 +105,54 @@ export default function WorkoutPlanPage() {
     );
   }, [plans, selectedDay]);
 
-  // Has today's workout been logged in workoutLogs?
   const todayLog = useMemo(() => {
     return logs.find((l) => l.date === todayDate);
   }, [logs, todayDate]);
 
-  // Exercise completion states for the current plan
+  // Identify weekdays with completed logs in recent 7 days
+  const loggedDaysSet = useMemo(() => {
+    const todayMs = new Date(`${todayDate}T00:00:00`).getTime();
+    const cutoff = todayMs - 7 * 24 * 60 * 60 * 1000;
+    const set = new Set();
+    for (const log of logs) {
+      if (!log?.date) continue;
+      const t = new Date(`${log.date}T00:00:00`).getTime();
+      if (!Number.isNaN(t) && t >= cutoff) {
+        const key = getIsoDateWeekdayKey(log.date);
+        if (key) set.add(key);
+      }
+    }
+    return set;
+  }, [logs, todayDate]);
+
+  // Determine nearest upcoming scheduled workout after selectedDay for Rest Day guidance
+  const nextScheduledSession = useMemo(() => {
+    if (plans.length === 0) return null;
+    const startIdx = WEEKDAYS.findIndex((d) => d.key === selectedDay);
+    if (startIdx < 0) return null;
+
+    for (let offset = 1; offset <= 6; offset++) {
+      const candidateDay = WEEKDAYS[(startIdx + offset) % 7];
+      const match = plans.find(
+        (p) => p.weekDay === candidateDay.key || p.weekDay === 'all'
+      );
+      if (match) {
+        return { day: candidateDay, plan: match };
+      }
+    }
+    return null;
+  }, [plans, selectedDay]);
+
   const exercises = currentPlan?.exercises || [];
   const totalExercises = exercises.length;
 
   const currentCompletedCount = useMemo(() => {
     if (!currentPlan) return 0;
-    const planCompleted = completedExercises[currentPlan.id] || [];
-    return planCompleted.length;
+    return (completedExercises[currentPlan.id] || []).length;
   }, [currentPlan, completedExercises]);
 
-  const progressPercentage = totalExercises > 0
-    ? Math.round((currentCompletedCount / totalExercises) * 100)
-    : 0;
+  const progressPercentage =
+    totalExercises > 0 ? Math.round((currentCompletedCount / totalExercises) * 100) : 0;
 
   const toggleExercise = (exerciseName) => {
     if (!currentPlan) return;
@@ -121,10 +167,6 @@ export default function WorkoutPlanPage() {
     });
   };
 
-  const handleOpenLogModal = () => {
-    setShowLogModal(true);
-  };
-
   const handleSubmitWorkoutLog = async (e) => {
     e.preventDefault();
     if (!currentPlan || !user) return;
@@ -136,7 +178,8 @@ export default function WorkoutPlanPage() {
       const payload = {
         workoutPlanId: currentPlan.id,
         date: todayDate,
-        completedExercises: planCompleted.length > 0 ? planCompleted : exercises.map((ex) => ex.name),
+        completedExercises:
+          planCompleted.length > 0 ? planCompleted : exercises.map((ex) => ex.name),
         durationMinutes: Number(modalData.durationMinutes) || 45,
         perceivedExertion: Number(modalData.perceivedExertion) || 7,
         notes: modalData.notes.trim() || undefined,
@@ -145,7 +188,7 @@ export default function WorkoutPlanPage() {
       const result = await logWorkoutCompletion(payload, token);
       setLogs((prev) => [result, ...prev]);
       setShowLogModal(false);
-      setSuccessToast('Workout successfully recorded! Keep up the momentum.');
+      setSuccessToast('Workout completion logged.');
       setTimeout(() => setSuccessToast(null), 5000);
     } catch (err) {
       setError(err.message || 'Failed to record workout log');
@@ -154,224 +197,315 @@ export default function WorkoutPlanPage() {
     }
   };
 
-  return (
-    <div className="workout-page" data-testid="workout-plan-page">
-      {/* Page Header */}
-      <div className="workout-header">
-        <div className="workout-header-title">
-          <div className="workout-icon-badge">
-            <Dumbbell size={28} />
-          </div>
-          <div>
-            <h1>Daily Workout Routine</h1>
-            <p className="workout-subtitle">
-              Follow your trainer-assigned split, track reps & sets, and log daily completion
-            </p>
-          </div>
-        </div>
-      </div>
+  const selectedDayInfo = WEEKDAYS.find((d) => d.key === selectedDay);
+  const assignedTrainerName = profile?.assignedTrainerName || profile?.trainerName || null;
 
-      {/* Success Notification */}
+  return (
+    <div className="member-page" data-testid="workout-plan-page">
+      <PageHeader
+        title="Daily Workout Routine"
+        subtitle="Follow your trainer-assigned split, track sets and reps, and log completed sessions."
+      />
+
       {successToast && (
-        <div className="error-banner" style={{ background: 'rgba(34, 197, 94, 0.15)', borderColor: 'rgba(34, 197, 94, 0.3)', color: '#4ade80' }} data-testid="success-banner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Award size={20} />
+        <div className="member-alert is-success" role="status" data-testid="success-banner">
+          <div className="member-alert-body">
+            <Award size={16} />
             <span>{successToast}</span>
           </div>
         </div>
       )}
 
-      {/* Error Banner */}
       {error && (
-        <div className="error-banner" data-testid="error-banner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <AlertCircle size={20} />
+        <div className="member-alert is-error" role="alert" data-testid="error-banner">
+          <div className="member-alert-body">
+            <AlertCircle size={16} />
             <span>{error}</span>
           </div>
           <button
+            type="button"
+            className="btn btn-secondary btn-sm"
             onClick={fetchWorkoutData}
-            style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
           >
-            <RefreshCw size={14} /> Retry
+            <RefreshCw size={14} />
+            <span>Retry</span>
           </button>
         </div>
       )}
 
-      {/* Weekday Tabs */}
-      <div className="weekday-nav" role="tablist" aria-label="Workout days">
-        {WEEKDAYS.map((day) => {
-          const isToday = day.key === todayKey;
-          const isActive = day.key === selectedDay;
-          return (
-            <button
-              key={day.key}
-              role="tab"
-              aria-selected={isActive}
-              data-testid={`weekday-tab-${day.key}`}
-              className={`weekday-btn ${isActive ? 'active' : ''}`}
-              onClick={() => setSelectedDay(day.key)}
-            >
-              <span className="weekday-name">{day.label}</span>
-              {isToday && <span className="today-indicator">Today</span>}
-            </button>
-          );
-        })}
-      </div>
-
       {loading ? (
-        <div className="loading-box" data-testid="loading-state">
-          <RefreshCw size={24} className="spinning" />
-          <span>Loading your routine...</span>
-        </div>
-      ) : !currentPlan ? (
-        /* Empty / Rest Day State */
-        <div className="empty-state" data-testid="rest-day-state">
-          <Flame size={48} className="empty-state-icon" />
-          <h3>Rest & Recovery Day</h3>
-          <p>
-            No workout plan is scheduled for {WEEKDAYS.find((d) => d.key === selectedDay)?.full || selectedDay}.
-            Rest is crucial for muscle repair, recovery, and central nervous system replenishment!
-          </p>
-        </div>
-      ) : (
-        /* Plan Content */
-        <>
-          {/* Summary / Progress Card */}
-          <div className="workout-summary-card" data-testid="workout-summary-card">
-            <div className="summary-top-row">
-              <div className="summary-info">
-                <h2>{currentPlan.title}</h2>
-                {currentPlan.trainerName && (
-                  <span className="trainer-badge">
-                    <User size={13} /> Coach {currentPlan.trainerName}
-                  </span>
-                )}
-                {currentPlan.notes && (
-                  <p style={{ margin: '0.5rem 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>
-                    {currentPlan.notes}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                {todayLog && selectedDay === todayKey ? (
-                  <div className="completion-status-pill completed" data-testid="status-completed-today">
-                    <CheckCircle2 size={16} /> Completed Today
-                  </div>
-                ) : (
-                  <div className="completion-status-pill pending">
-                    <Clock size={16} /> In Progress
-                  </div>
-                )}
-              </div>
+        <StatePanel
+          testId="loading-state"
+          icon={RefreshCw}
+          spinIcon
+          title="Loading your routine…"
+          description="Fetching weekly workouts and completion history."
+        />
+      ) : plans.length === 0 ? (
+        /* No Workout Plan Assigned — Weekday Rest Navigation Intentionally Hidden */
+        <section className="member-panel workout-unassigned-panel" data-testid="no-plan-state">
+          <div className="unassigned-head">
+            <div className="member-state-icon" aria-hidden="true">
+              <Dumbbell size={18} strokeWidth={1.65} />
             </div>
-
-            {/* Progress Bar */}
-            <div className="progress-section">
-              <div className="progress-labels">
-                <span>Routine Progress</span>
-                <span data-testid="progress-text">
-                  {currentCompletedCount} of {totalExercises} exercises completed ({progressPercentage}%)
-                </span>
-              </div>
-              <div className="progress-bar-container">
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: `${progressPercentage}%` }}
-                  data-testid="progress-bar-fill"
-                />
-              </div>
+            <div>
+              <h3>No Workout Plan Assigned</h3>
+              <p>
+                A weekly training split has not been published for your account yet. Once your
+                trainer creates your schedule, exercises, sets, and rest intervals will appear here.
+              </p>
             </div>
           </div>
+          {assignedTrainerName && (
+            <div className="assigned-trainer-meta">
+              <span>Assigned trainer</span>
+              <strong>{assignedTrainerName}</strong>
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
+          {/* Compact 7-Day Selector (Rendered Only When Trainer Plans Exist) */}
+          <div className="weekday-nav" role="tablist" aria-label="Workout days">
+            {WEEKDAYS.map((day) => {
+              const isToday = day.key === todayKey;
+              const isActive = day.key === selectedDay;
+              const hasPlan = plans.some((p) => p.weekDay === day.key || p.weekDay === 'all');
+              const isCompletedDay = loggedDaysSet.has(day.key);
 
-          {/* Exercises Checklist */}
-          <div className="exercises-container" data-testid="exercises-list">
-            {exercises.map((exercise, index) => {
-              const isChecked = (completedExercises[currentPlan.id] || []).includes(exercise.name);
+              const stateLabel = isCompletedDay
+                ? 'Done'
+                : isToday
+                  ? 'Today'
+                  : hasPlan
+                    ? 'Workout'
+                    : 'Rest';
 
               return (
-                <div
-                  key={`${exercise.name}-${index}`}
-                  className={`exercise-card ${isChecked ? 'completed' : ''}`}
-                  data-testid={`exercise-card-${index}`}
+                <button
+                  key={day.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  data-testid={`weekday-tab-${day.key}`}
+                  className={`weekday-btn ${isActive ? 'is-selected' : ''} ${
+                    isToday ? 'is-today' : ''
+                  }`}
+                  onClick={() => setSelectedDay(day.key)}
                 >
-                  <button
-                    type="button"
-                    className={`exercise-checkbox-btn ${isChecked ? 'checked' : ''}`}
-                    onClick={() => toggleExercise(exercise.name)}
-                    data-testid={`exercise-check-${index}`}
-                    aria-label={`Mark ${exercise.name} as ${isChecked ? 'incomplete' : 'complete'}`}
-                  >
-                    {isChecked ? <CheckCircle2 size={24} /> : <Circle size={24} />}
-                  </button>
-
-                  <div className="exercise-details">
-                    <div className="exercise-title-row">
-                      <h3 className="exercise-name">{exercise.name}</h3>
-                      {exercise.videoUrl && (
-                        <a
-                          href={exercise.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="video-link"
-                          data-testid={`video-link-${index}`}
-                        >
-                          <ExternalLink size={13} /> Demo Tutorial
-                        </a>
-                      )}
-                    </div>
-
-                    <div className="exercise-meta-row">
-                      <div className="meta-chip">
-                        <span className="meta-label">Sets:</span>
-                        <span className="meta-val">{exercise.sets}</span>
-                      </div>
-                      <div className="meta-chip">
-                        <span className="meta-label">Reps:</span>
-                        <span className="meta-val">{exercise.reps}</span>
-                      </div>
-                      {exercise.weightKg !== undefined && exercise.weightKg !== null && (
-                        <div className="meta-chip">
-                          <span className="meta-label">Target:</span>
-                          <span className="meta-val">{exercise.weightKg} kg</span>
-                        </div>
-                      )}
-                      {exercise.restSeconds && (
-                        <div className="meta-chip">
-                          <span className="meta-label">Rest:</span>
-                          <span className="meta-val">{exercise.restSeconds}s</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {exercise.notes && (
-                      <div className="exercise-notes">{exercise.notes}</div>
-                    )}
-                  </div>
-                </div>
+                  <span className="weekday-name">{day.label}</span>
+                  <span className="weekday-meta-row">
+                    <span
+                      className={`weekday-status-dot ${
+                        isCompletedDay
+                          ? 'is-done'
+                          : hasPlan
+                            ? 'is-scheduled'
+                            : 'is-rest'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="weekday-meta-label">{stateLabel}</span>
+                  </span>
+                </button>
               );
             })}
           </div>
 
-          {/* Actions Bar */}
-          <div className="workout-actions-bar">
-            <button
-              type="button"
-              className="btn-complete-workout"
-              onClick={handleOpenLogModal}
-              data-testid="complete-workout-btn"
-            >
-              <CheckCircle2 size={18} />
-              {todayLog ? 'Log Additional Session' : 'Record Workout Completion'}
-            </button>
+          {!currentPlan ? (
+        /* Compact Rest Day Recovery State */
+        <section className="member-panel rest-day-panel" data-testid="rest-day-state">
+          <div className="rest-day-top">
+            <div>
+              <StatusTag variant="neutral">{selectedDayInfo?.full || selectedDay}</StatusTag>
+              <h3>Rest &amp; Recovery Day</h3>
+              <p>
+                No workout session is scheduled for {selectedDayInfo?.full || selectedDay}. Give
+                muscle tissue and your nervous system time to recover before your next session.
+              </p>
+            </div>
+
+            {nextScheduledSession && (
+              <div className="next-workout-callout">
+                <span className="next-workout-eyebrow">Next scheduled workout</span>
+                <strong className="next-workout-title">
+                  {nextScheduledSession.day.full} — {nextScheduledSession.plan.title}
+                </strong>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setSelectedDay(nextScheduledSession.day.key)}
+                >
+                  <span>Preview {nextScheduledSession.day.label}</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
           </div>
-        </>
+
+          <div className="recovery-habits-strip" aria-label="General recovery guidance">
+            <div className="recovery-habit-item">
+              <span className="recovery-habit-title">Hydration</span>
+              <span className="recovery-habit-desc">Stay hydrated consistently throughout the day.</span>
+            </div>
+            <div className="recovery-habit-item">
+              <span className="recovery-habit-title">Mobility</span>
+              <span className="recovery-habit-desc">10–15 minutes of gentle stretching or foam rolling.</span>
+            </div>
+            <div className="recovery-habit-item">
+              <span className="recovery-habit-title">Light movement</span>
+              <span className="recovery-habit-desc">Easy outdoor walking to support circulation.</span>
+            </div>
+          </div>
+        </section>
+      ) : (
+        /* Scheduled Workout View */
+        <div className="workout-active-stack">
+          <section className="member-panel workout-summary-panel" data-testid="workout-summary-card">
+            <div className="workout-summary-top">
+              <div className="workout-summary-info">
+                <div className="workout-summary-badges">
+                  {currentPlan.muscleGroup && (
+                    <StatusTag variant="accent">{currentPlan.muscleGroup}</StatusTag>
+                  )}
+                  {currentPlan.trainerName && (
+                    <StatusTag variant="neutral">Coach {currentPlan.trainerName}</StatusTag>
+                  )}
+                </div>
+                <h2>{currentPlan.title}</h2>
+                {currentPlan.notes && <p className="workout-plan-notes">{currentPlan.notes}</p>}
+              </div>
+
+              {todayLog && selectedDay === todayKey ? (
+                <StatusTag variant="success" className="completed-today-tag">
+                  <span data-testid="status-completed-today">Completed Today</span>
+                </StatusTag>
+              ) : (
+                <StatusTag variant="warning">In Progress</StatusTag>
+              )}
+            </div>
+
+            <ProgressBar
+              label="Routine Progress"
+              value={progressPercentage}
+              valueText={`${currentCompletedCount} of ${totalExercises} exercises completed (${progressPercentage}%)`}
+              valueTestId="progress-text"
+              fillTestId="progress-bar-fill"
+              variant={progressPercentage === 100 ? 'success' : 'accent'}
+            />
+          </section>
+
+          {/* Clean Checklist Table Container */}
+          <section className="member-panel exercises-panel" data-testid="exercises-list">
+            <div className="member-section-header">
+              <h3 className="member-section-title">Exercises</h3>
+              <span className="member-section-meta tabular-nums">{totalExercises} movements</span>
+            </div>
+
+            <div className="exercises-list-stack">
+              {exercises.map((exercise, index) => {
+                const isChecked = (completedExercises[currentPlan.id] || []).includes(
+                  exercise.name
+                );
+
+                return (
+                  <div
+                    key={`${exercise.name}-${index}`}
+                    className={`exercise-row ${isChecked ? 'is-completed' : ''}`}
+                    data-testid={`exercise-card-${index}`}
+                  >
+                    <button
+                      type="button"
+                      className={`exercise-checkbox-btn ${isChecked ? 'is-checked' : ''}`}
+                      onClick={() => toggleExercise(exercise.name)}
+                      data-testid={`exercise-check-${index}`}
+                      aria-label={`Mark ${exercise.name} as ${isChecked ? 'incomplete' : 'complete'}`}
+                    >
+                      {isChecked ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                    </button>
+
+                    <div className="exercise-row-body">
+                      <div className="exercise-row-top">
+                        <div className="exercise-heading-group">
+                          <h4 className="exercise-name">{exercise.name}</h4>
+                          {exercise.muscleGroup && (
+                            <span className="exercise-muscle-tag">{exercise.muscleGroup}</span>
+                          )}
+                        </div>
+                        {exercise.videoUrl && (
+                          <a
+                            href={exercise.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="video-link"
+                            data-testid={`video-link-${index}`}
+                          >
+                            <ExternalLink size={13} />
+                            <span>Demo Tutorial</span>
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="exercise-specs-row tabular-nums">
+                        <span>
+                          <strong>{exercise.sets}</strong> sets
+                        </span>
+                        <span className="spec-sep" aria-hidden="true">
+                          ·
+                        </span>
+                        <span>
+                          <strong>{exercise.reps}</strong> reps
+                        </span>
+                        {exercise.weightKg !== undefined && exercise.weightKg !== null && (
+                          <>
+                            <span className="spec-sep" aria-hidden="true">
+                              ·
+                            </span>
+                            <span>
+                              <strong>{exercise.weightKg} kg</strong> target
+                            </span>
+                          </>
+                        )}
+                        {exercise.restSeconds && (
+                          <>
+                            <span className="spec-sep" aria-hidden="true">
+                              ·
+                            </span>
+                            <span>
+                              <strong>{exercise.restSeconds}s</strong> rest
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {exercise.notes && <p className="exercise-notes">{exercise.notes}</p>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="workout-actions-bar">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowLogModal(true)}
+                data-testid="complete-workout-btn"
+              >
+                <CheckCircle2 size={16} />
+                <span>{todayLog ? 'Log Additional Session' : 'Record Workout Completion'}</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+    </>
       )}
 
-      {/* Log Modal */}
+      {/* Completion Log Modal */}
       {showLogModal && (
         <div className="modal-overlay" data-testid="log-modal">
-          <div className="modal-content">
+          <div className="modal-content" role="dialog" aria-modal="true" aria-label="Log Workout Completion">
             <div className="modal-header">
               <h3>Log Workout Completion</h3>
               <button
@@ -379,8 +513,9 @@ export default function WorkoutPlanPage() {
                 className="btn-close"
                 onClick={() => setShowLogModal(false)}
                 data-testid="modal-close-btn"
+                aria-label="Close modal"
               >
-                &times;
+                <X size={18} />
               </button>
             </div>
 
@@ -393,9 +528,10 @@ export default function WorkoutPlanPage() {
                     type="number"
                     min="1"
                     max="360"
-                    className="form-input"
                     value={modalData.durationMinutes}
-                    onChange={(e) => setModalData({ ...modalData, durationMinutes: e.target.value })}
+                    onChange={(e) =>
+                      setModalData({ ...modalData, durationMinutes: e.target.value })
+                    }
                     required
                     data-testid="log-duration-input"
                   />
@@ -405,9 +541,10 @@ export default function WorkoutPlanPage() {
                   <label htmlFor="rpeSelect">Rate of Perceived Exertion (RPE 1-10)</label>
                   <select
                     id="rpeSelect"
-                    className="form-select"
                     value={modalData.perceivedExertion}
-                    onChange={(e) => setModalData({ ...modalData, perceivedExertion: e.target.value })}
+                    onChange={(e) =>
+                      setModalData({ ...modalData, perceivedExertion: e.target.value })
+                    }
                     data-testid="log-rpe-select"
                   >
                     <option value="4">4 - Easy Recovery</option>
@@ -424,8 +561,7 @@ export default function WorkoutPlanPage() {
                   <textarea
                     id="notesInput"
                     rows="3"
-                    className="form-textarea"
-                    placeholder="e.g., Felt strong on squats, increased bench press weight..."
+                    placeholder="Session notes and weights lifted"
                     value={modalData.notes}
                     onChange={(e) => setModalData({ ...modalData, notes: e.target.value })}
                     data-testid="log-notes-input"
@@ -436,18 +572,18 @@ export default function WorkoutPlanPage() {
               <div className="modal-footer">
                 <button
                   type="button"
-                  className="btn-cancel"
+                  className="btn btn-secondary"
                   onClick={() => setShowLogModal(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-submit"
+                  className="btn btn-primary"
                   disabled={submittingLog}
                   data-testid="submit-log-btn"
                 >
-                  {submittingLog ? 'Saving...' : 'Save & Log'}
+                  {submittingLog ? 'Saving…' : 'Save & Log'}
                 </button>
               </div>
             </form>
@@ -455,40 +591,39 @@ export default function WorkoutPlanPage() {
         </div>
       )}
 
-      {/* Adherence / Recent Logs History */}
+      {/* Recent Workout Adherence */}
       {logs.length > 0 && (
-        <section className="history-section" data-testid="workout-history-section">
-          <h3>
-            <Activity size={20} color="#ef4444" /> Recent Workout Adherence
-          </h3>
-          <div className="history-grid">
+        <section className="member-panel workout-history-panel" data-testid="workout-history-section">
+          <div className="member-section-header">
+            <h3 className="member-section-title">Recent Workout Adherence</h3>
+            <span className="member-section-meta tabular-nums">{logs.length} logged</span>
+          </div>
+
+          <div className="workout-history-grid">
             {logs.slice(0, 6).map((log) => (
-              <div key={log.id} className="history-card" data-testid={`history-card-${log.id}`}>
-                <div className="history-date">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Calendar size={14} color="#38bdf8" /> {log.date}
+              <div
+                key={log.id}
+                className="workout-history-item"
+                data-testid={`history-card-${log.id}`}
+              >
+                <div className="history-item-top">
+                  <span className="history-item-date tabular-nums">
+                    <Calendar size={13} />
+                    <span>{log.date}</span>
                   </span>
-                  <span style={{ color: '#22c55e', fontSize: '0.8rem', fontWeight: 600 }}>
+                  <span className="history-item-count tabular-nums">
                     {log.completedExercises?.length || 0} exercises
                   </span>
                 </div>
-                <div className="history-meta">
+                <div className="history-item-meta tabular-nums">
                   {log.durationMinutes && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span>
                       <Clock size={12} /> {log.durationMinutes} min
                     </span>
                   )}
-                  {log.perceivedExertion && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Flame size={12} color="var(--color-warning)" /> RPE {log.perceivedExertion}/10
-                    </span>
-                  )}
+                  {log.perceivedExertion && <span>RPE {log.perceivedExertion}/10</span>}
                 </div>
-                {log.notes && (
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1' }}>
-                    "{log.notes}"
-                  </p>
-                )}
+                {log.notes && <p className="history-item-notes">{log.notes}</p>}
               </div>
             ))}
           </div>

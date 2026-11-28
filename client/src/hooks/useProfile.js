@@ -102,6 +102,8 @@ export function useProfile(user) {
             displayName: merged.displayName || user.displayName || null,
             email: merged.email || user.email || null,
             phone: merged.phone || null,
+            gender: merged.gender || null,
+            emergencyContact: merged.emergencyContact || null,
           });
         } else {
           // Document doesn't exist yet — treat as newly registered member
