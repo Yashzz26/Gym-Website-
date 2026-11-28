@@ -73,8 +73,6 @@
 .placeholder-features h3 {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--color-text-muted);
   margin: 0 0 var(--spacing-1) 0;
 }

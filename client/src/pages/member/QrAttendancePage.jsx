@@ -9,7 +9,6 @@ import {
   RefreshCw,
   Flame,
   Clock,
-  Sparkles,
   ShieldCheck,
   Keyboard,
   ArrowRight,
@@ -42,7 +41,7 @@ function getWorkoutSession(date = new Date()) {
   if (hours >= 16 && hours < 23) {
     return { name: 'Evening Session', icon: Moon, label: 'Evening' };
   }
-  return { name: 'General Session', icon: Sparkles, label: 'General' };
+  return { name: 'General Session', icon: Clock, label: 'General' };
 }
 
 export default function QrAttendancePage() {
@@ -352,7 +351,7 @@ export default function QrAttendancePage() {
                 <span className="stat-unit">Day{streakStats.currentStreak === 1 ? '' : 's'}</span>
               </span>
               <span className="stat-subtext">
-                {streakStats.currentStreak > 0 ? '🔥 On Fire!' : 'Check in to start!'}
+                {streakStats.currentStreak > 0 ? 'Active streak' : 'Check in to start streak'}
               </span>
             </div>
           </div>
@@ -517,9 +516,9 @@ export default function QrAttendancePage() {
                 <div className="success-icon-wrapper">
                   <CheckCircle2 size={64} className="icon-pulse" />
                 </div>
-                <h2>Check-In Confirmed!</h2>
+                <h2>Check-in confirmed</h2>
                 <p className="success-subtitle">
-                  Welcome to FitMax, <strong>{checkInResult.memberName || profile?.displayName || 'Member'}</strong>!
+                  Checked in at IRONCORE, <strong>{checkInResult.memberName || profile?.displayName || 'Member'}</strong>
                 </p>
 
                 <div className="checkin-summary-grid">
@@ -544,7 +543,7 @@ export default function QrAttendancePage() {
                   <div className="summary-item streak-item">
                     <span className="item-label"><Flame size={14} /> Workout Streak</span>
                     <span className="item-val streak-val">
-                      {checkInResult.streakDays ?? (streakStats.currentStreak || 1)} Days Active 🔥
+                      {checkInResult.streakDays ?? (streakStats.currentStreak || 1)} day streak
                     </span>
                   </div>
 

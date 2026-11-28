@@ -608,7 +608,7 @@ export default function MyMembersPage() {
               {modalSuccess && (
                 <div className="modal-alert success" role="alert">
                   <CheckCircle2 size={16} />
-                  <span>Progress updated successfully!</span>
+                  <span>Progress updated</span>
                 </div>
               )}
 

@@ -446,9 +446,9 @@ export default function OnlineJoiningPage() {
               Member Information
             </h4>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="confirm-phone" style={{ fontSize: '0.8125rem', color: '#cbd5e1' }}>
+                <label htmlFor="confirm-phone" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                   Contact Phone Number *
                 </label>
                 <input
@@ -460,18 +460,18 @@ export default function OnlineJoiningPage() {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   style={{
                     height: '42px',
-                    borderRadius: '8px',
-                    border: '1px solid #223553',
-                    backgroundColor: '#142138',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border-default)',
+                    backgroundColor: 'var(--color-bg-tertiary)',
                     padding: '0 12px',
-                    color: '#ffffff',
+                    color: 'var(--color-text-primary)',
                     outline: 'none',
                   }}
                 />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="confirm-emergency" style={{ fontSize: '0.8125rem', color: '#cbd5e1' }}>
+                <label htmlFor="confirm-emergency" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                   Emergency Contact Phone
                 </label>
                 <input
@@ -482,11 +482,11 @@ export default function OnlineJoiningPage() {
                   onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })}
                   style={{
                     height: '42px',
-                    borderRadius: '8px',
-                    border: '1px solid #223553',
-                    backgroundColor: '#142138',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border-default)',
+                    backgroundColor: 'var(--color-bg-tertiary)',
                     padding: '0 12px',
-                    color: '#ffffff',
+                    color: 'var(--color-text-primary)',
                     outline: 'none',
                   }}
                 />
@@ -494,7 +494,7 @@ export default function OnlineJoiningPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label htmlFor="confirm-address" style={{ fontSize: '0.8125rem', color: '#cbd5e1' }}>
+              <label htmlFor="confirm-address" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                 Address / City
               </label>
               <input
@@ -505,11 +505,11 @@ export default function OnlineJoiningPage() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 style={{
                   height: '42px',
-                  borderRadius: '8px',
-                  border: '1px solid #223553',
-                  backgroundColor: '#142138',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-border-default)',
+                  backgroundColor: 'var(--color-bg-tertiary)',
                   padding: '0 12px',
-                  color: '#ffffff',
+                  color: 'var(--color-text-primary)',
                   outline: 'none',
                 }}
               />

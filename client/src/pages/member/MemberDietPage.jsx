@@ -7,7 +7,7 @@ import {
   User,
   AlertCircle,
   RefreshCw,
-  Sparkles,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getMemberActiveDietPlan } from '../../services/dietService';
@@ -105,7 +105,7 @@ export default function MemberDietPage() {
             {/* Metrics Strip */}
             <div className="overview-metrics-strip">
               <div className="overview-metric-box calories">
-                <Flame size={20} color="#f97316" />
+                <Flame size={20} strokeWidth={1.75} color="var(--color-warning)" />
                 <span className="metric-val" data-testid="target-calories-val">
                   {dietPlan.targetCalories?.toLocaleString()}
                 </span>
@@ -113,7 +113,7 @@ export default function MemberDietPage() {
               </div>
 
               <div className="overview-metric-box water">
-                <Droplet size={20} color="#38bdf8" />
+                <Droplet size={20} strokeWidth={1.75} color="var(--color-accent-light)" />
                 <span className="metric-val" data-testid="target-water-val">
                   {dietPlan.waterIntakeLiters || 3.5} L
                 </span>
@@ -123,8 +123,8 @@ export default function MemberDietPage() {
 
             {/* Macros Breakdown */}
             <div>
-              <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'block' }}>
-                Daily Macronutrient Targets
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)', marginBottom: '0.5rem', display: 'block' }}>
+                Daily macronutrient targets
               </span>
               <div className="macros-display-grid" data-testid="macros-display-grid">
                 <div className="macro-box protein">
@@ -199,7 +199,7 @@ export default function MemberDietPage() {
                 </div>
 
                 {meal.notes && (
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                     Note: {meal.notes}
                   </p>
                 )}
@@ -211,7 +211,7 @@ export default function MemberDietPage() {
           {dietPlan.notes && (
             <div className="coaching-card" data-testid="coaching-card">
               <h3>
-                <Sparkles size={18} color="#22c55e" /> Coach's Nutrition Advice
+                <UtensilsCrossed size={18} strokeWidth={1.75} color="var(--color-success)" /> Coach&apos;s Nutrition Advice
               </h3>
               <p>{dietPlan.notes}</p>
             </div>

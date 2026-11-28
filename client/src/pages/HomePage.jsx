@@ -80,24 +80,24 @@ export default function HomePage() {
         <div
           role="status"
           style={{
-            backgroundColor: 'rgba(245, 158, 11, 0.12)',
+            backgroundColor: 'var(--color-warning-bg)',
             border: '1px solid rgba(245, 158, 11, 0.3)',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-lg)',
             padding: '14px 18px',
-            marginBottom: '1.5rem',
+            marginBottom: 'var(--spacing-6)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            color: '#fbbf24',
+            gap: 'var(--spacing-3)',
+            color: 'var(--color-warning)',
           }}
         >
-          <ShieldAlert size={22} style={{ flexShrink: 0 }} />
+          <ShieldAlert size={20} strokeWidth={1.75} style={{ flexShrink: 0 }} />
           <div>
-            <strong style={{ display: 'block', marginBottom: '2px' }}>
+            <strong style={{ display: 'block', marginBottom: '2px', fontWeight: 'var(--font-weight-semibold)' }}>
               Account Awaiting Approval
             </strong>
-            <span style={{ fontSize: '0.875rem', color: '#fef3c7' }}>
-              Your account is pending gym owner activation for staff roles. You can view gym plans and explore public information below.
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              Your staff account is pending gym owner activation. You can view gym plans below.
             </span>
           </div>
         </div>
@@ -107,35 +107,36 @@ export default function HomePage() {
         <div
           role="alert"
           style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.12)',
+            backgroundColor: 'var(--color-danger-bg)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-lg)',
             padding: '14px 18px',
-            marginBottom: '1.5rem',
+            marginBottom: 'var(--spacing-6)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            color: '#ef4444',
+            gap: 'var(--spacing-3)',
+            color: 'var(--color-danger)',
           }}
         >
-          <ShieldAlert size={22} style={{ flexShrink: 0 }} />
+          <ShieldAlert size={20} strokeWidth={1.75} style={{ flexShrink: 0 }} />
           <div>
-            <strong style={{ display: 'block', marginBottom: '2px' }}>Account Suspended</strong>
-            <span style={{ fontSize: '0.875rem', color: '#fca5a5' }}>
-              Your account has been suspended. Please contact the gym management for assistance.
+            <strong style={{ display: 'block', marginBottom: '2px', fontWeight: 'var(--font-weight-semibold)' }}>
+              Account Suspended
+            </strong>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              Your account has been suspended. Contact gym management for assistance.
             </span>
           </div>
         </div>
       )}
 
       <div className="home-hero">
-        <span className="badge badge-accent">React Router & App Shell Configured</span>
+        <span className="badge badge-accent">IRONCORE Workspace</span>
         <h1 className="home-title">
           Ironcore <span className="text-accent">Gym Management</span>
         </h1>
         <p className="home-subtitle">
-          Single gym management application serving 4 distinct user roles across 11 blueprint screens.
-          Explore the workspace below:
+          Unified workspace for gym owners, front-desk reception, trainers, and members.
         </p>
       </div>
 
@@ -172,10 +173,9 @@ export default function HomePage() {
         <div className="arch-left">
           <Shield size={24} className="text-accent" />
           <div>
-            <h3>Security & Routing Architecture</h3>
+            <h3>Role Enforcement & Security</h3>
             <p>
-              Front-end route groups configured for Auth, Member, Reception, Trainer, and Owner.
-              Role-based backend enforcement via Firebase token verification will be attached in Days 4–7.
+              Server-side Firebase ID token verification and role-based Firestore rules guard all operational data across Member, Reception, Trainer, and Owner workspaces.
             </p>
           </div>
         </div>

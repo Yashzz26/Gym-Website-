@@ -11,7 +11,6 @@ import {
   Check,
   Sun,
   Moon,
-  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getCurrentQrToken, rotateQrToken } from '../../services/qrService';
@@ -43,7 +42,7 @@ export default function GymQrDisplayPage() {
     if (hours >= 16 && hours < 23) {
       return { name: 'Evening Session', icon: Moon, class: 'session-evening' };
     }
-    return { name: 'General Hours', icon: Sparkles, class: 'session-general' };
+    return { name: 'General Hours', icon: Clock, class: 'session-general' };
   };
 
   const session = getSessionInfo();

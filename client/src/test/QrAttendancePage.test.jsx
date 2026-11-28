@@ -175,7 +175,7 @@ describe('QrAttendancePage — Member QR Scanner & Attendance History (Day 18 Ta
         'eyJneW1JZCI6ImZpdG1heC1tYWluIn0.validSignature123',
         'mock-firebase-token'
       );
-      expect(screen.getByText(/Check-In Confirmed!/i)).toBeInTheDocument();
+      expect(screen.getByText(/Check-in confirmed/i)).toBeInTheDocument();
       expect(screen.getByText(/Alex Rider/i)).toBeInTheDocument();
       expect(screen.getByText(/Atomic Verified/i)).toBeInTheDocument();
     });

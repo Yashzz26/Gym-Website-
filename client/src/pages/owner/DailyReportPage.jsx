@@ -542,10 +542,10 @@ export default function DailyReportPage() {
                   <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#18181b',
-                      borderColor: '#27272a',
-                      borderRadius: '0.375rem',
-                      color: '#f4f4f5',
+                      backgroundColor: '#131418',
+                      borderColor: 'rgba(255, 255, 255, 0.08)',
+                      borderRadius: '8px',
+                      color: '#ededed',
                       fontSize: '0.8125rem',
                     }}
                   />

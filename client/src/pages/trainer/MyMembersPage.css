@@ -562,11 +562,11 @@
 }
 
 .goal-icon.dumbbell {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .goal-icon.heart {
-  color: #ec4899;
+  color: var(--color-success);
 }
 
 .goal-text {

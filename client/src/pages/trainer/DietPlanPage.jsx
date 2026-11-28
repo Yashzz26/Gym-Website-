@@ -509,13 +509,13 @@ export default function DietPlanPage() {
                 <div className="summary-metric-lbl">From Macros</div>
               </div>
               <div className="summary-metric">
-                <div className="summary-metric-val" style={{ color: calculatedKcal > targetCalories ? '#f97316' : '#22c55e' }}>
+                <div className="summary-metric-val" style={{ color: calculatedKcal > targetCalories ? 'var(--color-warning)' : 'var(--color-success)' }}>
                   {Math.abs(calculatedKcal - Number(targetCalories))} kcal
                 </div>
                 <div className="summary-metric-lbl">Delta vs Target</div>
               </div>
               <div className="summary-metric">
-                <div className="summary-metric-val" style={{ color: '#38bdf8' }}>
+                <div className="summary-metric-val" style={{ color: 'var(--color-accent-light)' }}>
                   {waterIntakeLiters} L
                 </div>
                 <div className="summary-metric-lbl">Daily Water</div>
@@ -527,14 +527,14 @@ export default function DietPlanPage() {
           <div className="meals-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="card-title" style={{ margin: 0 }}>
-                <Clock size={20} color="#38bdf8" /> Daily Meal Schedule & Food Items
+                <Clock size={20} color="var(--color-accent-light)" /> Daily Meal Schedule & Food Items
               </h2>
               <button
                 type="button"
                 className="btn-add-food-item"
                 onClick={handleAddMeal}
                 data-testid="add-meal-btn"
-                style={{ background: 'rgba(56, 189, 248, 0.1)', borderColor: 'rgba(56, 189, 248, 0.3)', color: '#38bdf8' }}
+                style={{ background: 'var(--color-accent-subtle)', borderColor: 'var(--color-accent-border)', color: 'var(--color-accent-light)' }}
               >
                 <Plus size={16} /> Add Meal
               </button>
@@ -577,8 +577,8 @@ export default function DietPlanPage() {
 
                 {/* Items in Meal */}
                 <div className="food-items-container">
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Food Items & Portions
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>
+                    Food items & portions
                   </span>
                   {meal.items.map((item, itemIdx) => (
                     <div key={itemIdx} className="food-item-row" data-testid={`food-item-${mealIdx}-${itemIdx}`}>

@@ -356,21 +356,21 @@ export default function PlansManagementPage({ initialPlans = null }) {
                   className="preset-btn"
                   onClick={() => handleApplyPreset('starter')}
                 >
-                  ⚡ 1 Month Starter (₹1,499)
+                  1 Month Starter (₹1,499)
                 </button>
                 <button
                   type="button"
                   className="preset-btn"
                   onClick={() => handleApplyPreset('pro')}
                 >
-                  🔥 3 Months Pro (₹3,999)
+                  3 Months Pro (₹3,999)
                 </button>
                 <button
                   type="button"
                   className="preset-btn"
                   onClick={() => handleApplyPreset('elite')}
                 >
-                  ⭐ 12 Months Elite (₹11,999)
+                  12 Months Elite (₹11,999)
                 </button>
               </div>
             </div>

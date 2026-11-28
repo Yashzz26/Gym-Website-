@@ -10,7 +10,6 @@ import {
   UserX,
   UserPlus,
   ArrowRight,
-  Sparkles,
   RefreshCw,
   Clock,
   BarChart3,
@@ -140,12 +139,10 @@ export default function OwnerDashboardPage({ initialStats = null }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
             <span className="dashboard-role-badge">Owner Portal</span>
             <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-              Executive Hub
+              {profile?.displayName || user?.displayName || 'Gym Owner'}
             </span>
           </div>
-          <h1>
-            Welcome back, {profile?.displayName || user?.displayName || 'Gym Owner'}
-          </h1>
+          <h1>Owner Overview</h1>
           <p>Real-time metrics, operational oversight, and business management controls.</p>
         </div>
 
@@ -171,7 +168,7 @@ export default function OwnerDashboardPage({ initialStats = null }) {
       {/* 2. Key Metrics & Report Cards with Clear Empty States */}
       <section aria-label="Key Performance Indicators">
         <h2 className="section-title">
-          <Sparkles size={18} color="var(--color-accent)" />
+          <BarChart3 size={18} strokeWidth={1.75} color="var(--color-accent)" />
           <span>Operational Snapshot</span>
         </h2>
 

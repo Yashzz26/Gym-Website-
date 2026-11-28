@@ -10,7 +10,6 @@ import {
   CreditCard,
   ArrowRight,
   History,
-  Sparkles,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
@@ -263,8 +262,8 @@ export default function MemberProfilePage() {
             <div className="active-membership-card">
               <div className="card-top-row">
                 <div className="plan-title-area">
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Current Subscription
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>
+                    Current subscription
                   </span>
                   <h3>{activeMembership.planName || 'Gym Membership'}</h3>
                   <div className="plan-price-tag">{formatPrice(activeMembership.priceInPaise)}</div>
@@ -285,7 +284,7 @@ export default function MemberProfilePage() {
               {isExpiringSoon && (
                 <div className="alert-box error" style={{ marginBottom: '1rem' }}>
                   <AlertTriangle size={18} />
-                  <span>Your membership expires in {activeMembership.daysRemaining} days! Renew now to keep uninterrupted access.</span>
+                  <span>Your membership expires in {activeMembership.daysRemaining} days. Renew now to keep uninterrupted access.</span>
                 </div>
               )}
 
@@ -309,7 +308,7 @@ export default function MemberProfilePage() {
 
                 <div className="stat-item">
                   <span className="stat-label">Payment Method</span>
-                  <span className="stat-value" style={{ textTransform: 'uppercase' }}>
+                  <span className="stat-value" style={{ textTransform: 'capitalize' }}>
                     {activeMembership.paymentMethod || 'Online'}
                   </span>
                 </div>
@@ -333,7 +332,7 @@ export default function MemberProfilePage() {
                   className="btn-primary"
                   onClick={handleOpenRenewal}
                 >
-                  <Sparkles size={16} />
+                  <RefreshCw size={16} />
                   Renew / Extend Membership
                 </button>
               </div>
@@ -345,7 +344,7 @@ export default function MemberProfilePage() {
                     <RefreshCw size={18} />
                     Choose Plan & Renew Membership
                   </h4>
-                  <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
                     Renewing now extends your validity seamlessly from your current expiry date.
                   </p>
 
@@ -358,11 +357,11 @@ export default function MemberProfilePage() {
                         role="button"
                         tabIndex={0}
                       >
-                        <strong style={{ color: '#ffffff' }}>{plan.name}</strong>
-                        <span style={{ color: '#38bdf8', fontWeight: '700' }}>
+                        <strong style={{ color: 'var(--color-text-primary)' }}>{plan.name}</strong>
+                        <span style={{ color: 'var(--color-accent-light)', fontWeight: 'var(--font-weight-semibold)' }}>
                           {formatPrice(plan.priceInPaise)}
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
                           {plan.durationDays} Days Duration
                         </span>
                       </div>
@@ -370,18 +369,18 @@ export default function MemberProfilePage() {
                   </div>
 
                   <div style={{ margin: '1rem 0' }}>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.4rem' }}>
+                    <label style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>
                       Payment Method
                     </label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       style={{
-                        background: '#090d16',
-                        color: '#f8fafc',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        background: 'var(--color-bg-tertiary)',
+                        color: 'var(--color-text-primary)',
+                        border: '1px solid var(--color-border-default)',
                         padding: '0.5rem 0.75rem',
-                        borderRadius: '0.5rem',
+                        borderRadius: 'var(--radius-md)',
                         width: '100%',
                         maxWidth: '240px',
                       }}
@@ -466,22 +465,22 @@ export default function MemberProfilePage() {
 
                     <div className="timeline-details">
                       <div>
-                        <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b' }}>PERIOD</span>
+                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Period</span>
                         <span>{formatDate(record.startDate)} – {formatDate(record.endDate)}</span>
                       </div>
                       <div>
-                        <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b' }}>DURATION</span>
+                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Duration</span>
                         <span>{record.durationDays} Days</span>
                       </div>
                       <div>
-                        <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b' }}>FEE</span>
-                        <span style={{ color: '#38bdf8', fontWeight: '600' }}>
+                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Fee</span>
+                        <span style={{ color: 'var(--color-accent-light)', fontWeight: 'var(--font-weight-semibold)' }}>
                           {formatPrice(record.priceInPaise)}
                         </span>
                       </div>
                       <div>
-                        <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b' }}>METHOD</span>
-                        <span style={{ textTransform: 'uppercase' }}>
+                        <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Method</span>
+                        <span style={{ textTransform: 'capitalize' }}>
                           {record.paymentMethod || 'Online'}
                         </span>
                       </div>
@@ -490,7 +489,7 @@ export default function MemberProfilePage() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic' }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
                 No prior membership periods on record.
               </p>
             )}

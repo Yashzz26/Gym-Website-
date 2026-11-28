@@ -46,7 +46,8 @@ describe('OwnerDashboardPage — Layout & Empty States', () => {
     await renderDashboard();
 
     expect(screen.getByText(/Owner Portal/i)).toBeInTheDocument();
-    expect(screen.getByText(/Welcome back, Vikram Gym Owner/i)).toBeInTheDocument();
+    expect(screen.getByText(/Owner Overview/i)).toBeInTheDocument();
+    expect(screen.getByText(/Vikram Gym Owner/i)).toBeInTheDocument();
     expect(screen.getByText(/Real-time metrics, operational oversight/i)).toBeInTheDocument();
   });
 

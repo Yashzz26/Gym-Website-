@@ -480,7 +480,7 @@ export default function WorkoutPlanPage() {
                   )}
                   {log.perceivedExertion && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Flame size={12} color="#f97316" /> RPE {log.perceivedExertion}/10
+                      <Flame size={12} color="var(--color-warning)" /> RPE {log.perceivedExertion}/10
                     </span>
                   )}
                 </div>

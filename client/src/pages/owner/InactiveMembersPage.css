@@ -101,8 +101,8 @@
 }
 
 .bulk-action-btn:hover:not(:disabled) {
-  background-color: var(--brand-hover, #b82d16);
-  border-color: var(--brand-hover, #b82d16);
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .bulk-action-btn:disabled,
@@ -189,9 +189,7 @@
   gap: 8px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-secondary, #a1a1aa);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
 }
 
 .kpi-card.critical .kpi-icon {
@@ -469,10 +467,10 @@
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
-  font-weight: 600;
-  background-color: rgba(147, 51, 234, 0.15);
-  color: #c084fc;
-  border: 1px solid rgba(147, 51, 234, 0.3);
+  font-weight: 500;
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent-light);
+  border: 1px solid var(--color-accent-border);
 }
 
 /* Absent Badge */
@@ -481,7 +479,7 @@
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -799,8 +797,8 @@
 }
 
 .modal-submit-btn:hover:not(:disabled) {
-  background-color: var(--brand-hover, #b82d16);
-  border-color: var(--brand-hover, #b82d16);
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .modal-submit-btn:disabled,

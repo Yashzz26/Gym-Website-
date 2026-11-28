@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import './PlaceholderScreen.css';
 
 /**
@@ -36,7 +37,9 @@ export default function PlaceholderScreen({
             <ul>
               {features.map((feat, index) => (
                 <li key={index}>
-                  <span className="bullet">✓</span>
+                  <span className="bullet" aria-hidden="true">
+                    <Check size={14} strokeWidth={1.75} />
+                  </span>
                   <span>{feat}</span>
                 </li>
               ))}

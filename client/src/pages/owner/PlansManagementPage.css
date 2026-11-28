@@ -113,13 +113,12 @@
 
 .plan-card:hover {
   border-color: var(--color-border-default);
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
 .plan-card.featured {
   border-top: 2px solid var(--color-accent);
-  background: linear-gradient(180deg, var(--color-accent-subtle) 0%, var(--color-bg-secondary) 15%);
+  background-color: var(--color-bg-secondary);
 }
 
 .plan-card-header {
@@ -137,14 +136,13 @@
 
 .plan-badge-tag {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius-xs);
   background-color: var(--color-accent-subtle);
-  color: var(--color-accent);
+  color: var(--color-accent-light);
   border: 1px solid var(--color-accent-border);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
 }
 
 .plan-status-badge {

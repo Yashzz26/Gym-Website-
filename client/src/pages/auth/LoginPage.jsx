@@ -85,7 +85,7 @@ export default function LoginPage() {
   return (
     <div className="auth-form-card">
       <h2 className="auth-title">Sign In</h2>
-      <p className="auth-subtitle">Hi! Welcome back, you&apos;ve been missed</p>
+      <p className="auth-subtitle">Sign in to access your gym workspace</p>
 
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="auth-field">
