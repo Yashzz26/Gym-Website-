@@ -10,7 +10,6 @@ import {
   BarChart3,
   UserX,
   ArrowRight,
-  Shield,
   ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -167,22 +166,6 @@ export default function HomePage() {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="card architecture-banner">
-        <div className="arch-left">
-          <Shield size={24} className="text-accent" />
-          <div>
-            <h3>Role Enforcement & Security</h3>
-            <p>
-              Server-side Firebase ID token verification and role-based Firestore rules guard all operational data across Member, Reception, Trainer, and Owner workspaces.
-            </p>
-          </div>
-        </div>
-        <Link to="/login" className="btn btn-primary">
-          <span>Go to Auth Screen</span>
-          <ArrowRight size={16} />
-        </Link>
       </div>
     </div>
   );
