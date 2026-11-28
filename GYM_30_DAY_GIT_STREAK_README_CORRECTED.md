@@ -564,11 +564,11 @@ counts contribution days, not the number of commits as separate squares.
     -   Display report cards and weekly attendance chart using real API
         data, with loading, empty and error states.
     -   Commit: `feat(owner): build reports dashboard`
--   [ ] Both planned commits pushed and visible on GitHub (Day 26).
+-   [x] Both planned commits pushed and visible on GitHub (Day 26).
 
 ### Day 27 --- Saturday, 28 November 2026 --- PWA and responsive polish
 
--   [ ] **Task 53: Add PWA manifest, icons and install experience**
+-   [x] **Task 53: Add PWA manifest, icons and install experience**
     \[M\]
     -   Configure app name, theme, icons and installability; test
         install prompts on supported browsers.

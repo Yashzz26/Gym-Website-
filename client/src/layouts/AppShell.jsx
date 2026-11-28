@@ -23,9 +23,12 @@ import {
   LogOut,
   Bell,
   ChevronRight,
+  Download,
 } from 'lucide-react';
 import { logout } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
+import { usePwaInstall } from '../hooks/usePwaInstall';
+import PwaInstallBanner from '../components/PwaInstallBanner';
 import './AppShell.css';
 
 /**
@@ -82,6 +85,14 @@ export default function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, profile, isAuthenticated } = useAuth();
+  const {
+    canPromptInstall,
+    isIosInstallable,
+    isPrompting,
+    showInstallBanner,
+    promptInstall,
+    dismissBanner,
+  } = usePwaInstall();
 
   // Active role group is strictly derived from the authenticated profile role
   const userRole = profile?.role || 'member';
@@ -244,6 +255,18 @@ export default function AppShell() {
           </div>
 
           <div className="header-right">
+            {canPromptInstall && (
+              <button
+                type="button"
+                className="btn btn-secondary header-login-btn"
+                onClick={promptInstall}
+                disabled={isPrompting}
+                aria-label="Install IRONCORE app"
+              >
+                <Download size={15} />
+                <span>Install</span>
+              </button>
+            )}
             <div className="status-indicator">
               <span className="status-ping"></span>
               <span className="status-text">{isAuthenticated ? 'Online' : 'Signed out'}</span>
@@ -274,6 +297,15 @@ export default function AppShell() {
 
         {/* Routed Page Content */}
         <main className="content-container">
+          {showInstallBanner && (
+            <PwaInstallBanner
+              canPromptInstall={canPromptInstall}
+              isIosInstallable={isIosInstallable}
+              isPrompting={isPrompting}
+              onInstall={promptInstall}
+              onDismiss={dismissBanner}
+            />
+          )}
           <Outlet />
         </main>
       </div>
