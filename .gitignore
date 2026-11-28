@@ -75,7 +75,6 @@ desktop.ini
 # ========================
 # PWA / Service Worker
 # ========================
-client/public/sw.js
 client/public/workbox-*.js
 
 # ========================

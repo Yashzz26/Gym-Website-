@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import {
   Menu,
@@ -24,6 +24,7 @@ import {
   Bell,
   ChevronRight,
   Download,
+  WifiOff,
 } from 'lucide-react';
 import { logout } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
@@ -83,7 +84,27 @@ const ROLE_NAV_CONFIG = {
 
 export default function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
+      ? navigator.onLine
+      : true
+  );
   const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   const { user, profile, isAuthenticated } = useAuth();
   const {
     canPromptInstall,
@@ -267,9 +288,11 @@ export default function AppShell() {
                 <span>Install</span>
               </button>
             )}
-            <div className="status-indicator">
+            <div className={`status-indicator ${isOnline ? '' : 'is-offline'}`}>
               <span className="status-ping"></span>
-              <span className="status-text">{isAuthenticated ? 'Online' : 'Signed out'}</span>
+              <span className="status-text">
+                {!isOnline ? 'Offline' : isAuthenticated ? 'Online' : 'Signed out'}
+              </span>
             </div>
             <button className="icon-btn" aria-label="Notifications">
               <Bell size={18} />
@@ -297,6 +320,14 @@ export default function AppShell() {
 
         {/* Routed Page Content */}
         <main className="content-container">
+          {!isOnline && (
+            <div className="offline-status-banner" role="status" data-testid="offline-banner">
+              <WifiOff size={16} strokeWidth={1.75} />
+              <span>
+                You are offline. QR attendance check-ins and Razorpay payments require a live connection.
+              </span>
+            </div>
+          )}
           {showInstallBanner && (
             <PwaInstallBanner
               canPromptInstall={canPromptInstall}

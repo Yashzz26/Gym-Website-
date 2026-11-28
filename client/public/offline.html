@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e11" />
+    <title>Offline — IRONCORE Gym Management</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background-color: #0d0e11;
+        color: #ededed;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.5;
+      }
+
+      .offline-card {
+        width: 100%;
+        max-width: 440px;
+        background-color: #131418;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: #0284c7;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .brand-name {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: #ededed;
+      }
+
+      h1 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        color: #ededed;
+      }
+
+      p {
+        font-size: 14px;
+        color: #a1a1a6;
+      }
+
+      .offline-notice {
+        padding: 12px 14px;
+        border-radius: 8px;
+        background-color: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        color: #f59e0b;
+        font-size: 13px;
+      }
+
+      .retry-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        background-color: #0284c7;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 120ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .retry-btn:hover {
+        background-color: #0369a1;
+      }
+
+      .retry-btn:focus-visible {
+        outline: 2px solid #38bdf8;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="offline-card" role="main">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h.01" />
+            <path d="M8.5 16.429a5 5 0 0 1 7 0" />
+            <path d="M5 12.859a10 10 0 0 1 5.17-2.69" />
+            <path d="M19 12.859a10 10 0 0 0-2.007-1.523" />
+            <path d="M2 8.82a15 15 0 0 1 4.177-2.643" />
+            <path d="M22 8.82a15 15 0 0 0-11.288-3.764" />
+            <path d="m2 2 20 20" />
+          </svg>
+        </div>
+        <span class="brand-name">IRONCORE</span>
+      </div>
+
+      <h1>Connection unavailable</h1>
+      <p>
+        Your device appears to be offline. Reconnect to Wi-Fi or mobile data to load the latest gym workspace.
+      </p>
+
+      <div class="offline-notice">
+        QR attendance check-ins, Razorpay payments, and member records require an active server connection and are never cached offline.
+      </div>
+
+      <button type="button" class="retry-btn" onclick="window.location.reload()">
+        Try again
+      </button>
+    </main>
+  </body>
+</html>

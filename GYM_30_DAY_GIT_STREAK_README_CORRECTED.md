@@ -573,7 +573,7 @@ counts contribution days, not the number of commits as separate squares.
     -   Configure app name, theme, icons and installability; test
         install prompts on supported browsers.
     -   Commit: `feat(pwa): add manifest and install experience`
--   [ ] **Task 54: Add safe service worker caching and responsive
+-   [x] **Task 54: Add safe service worker caching and responsive
     review** \[M\]
     -   Cache static assets only, provide offline fallback, avoid
         caching sensitive data, and review key screens on
